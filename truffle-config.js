@@ -8,17 +8,31 @@ module.exports = {
       port: 7545,        // Ganache default
       network_id: "*",
     },
-    mumbai: {
-      provider: () => new HDWalletProvider(
-        process.env.MNEMONIC,
-        `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_KEY}`
-      ),
-      network_id: 80001,
+    amoy: {
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: process.env.MNEMONIC },
+        providerOrUrl: `wss://polygon-amoy.infura.io/ws/v3/${process.env.INFURA_KEY}`,
+        pollingInterval: 30000,
+      }),
+      network_id: 80002,
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
+      networkCheckTimeout: 60000,
+      websocket: true,     // Enable WebSocket support
       gas: 6000000,
-      gasPrice: 10000000000,  // 10 gwei
+      gasPrice: 25000000000, // 25 gwei
+    },
+    polygon: {
+      provider: () => new HDWalletProvider(
+        process.env.MNEMONIC,
+        `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_KEY}`
+      ),
+      network_id: 137,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      gasPrice: 100000000000, // 100 gwei
     }
   },
   compilers: {

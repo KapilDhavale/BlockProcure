@@ -41,7 +41,7 @@ contract PaymentVault is ReentrancyGuard {
             registry.projectRoles(_projectId, msg.sender) == ProjectRegistry.Role.SUPPLIER,
             "Only supplier can log invoices"
         );
-        require(!invoiceLog[_projectId][_invoiceHash], "Invoice already submitted — duplicate detected");
+        require(!invoiceLog[_projectId][_invoiceHash], "Invoice already submitted - duplicate detected");
         invoiceLog[_projectId][_invoiceHash] = true;
         emit InvoiceLogged(_projectId, _invoiceHash, msg.sender);
     }
