@@ -1,9 +1,9 @@
 // Update CONTRACT_ADDRESSES after: truffle migrate --network development
 export const CONTRACT_ADDRESSES = {
-    ProjectRegistry: '0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab',
-    MilestoneManager: '0x5b1869D9A4C187F2EAa108f3062412ecf0526b24',
-    PaymentVault: '0xCfEB869F69431e42cdB54A4F4f105C19C080A601',
-}
+    ProjectRegistry: "0x0E696947A06550DEf604e82C26fd9E493e576337",
+    MilestoneManager: "0xDb56f2e9369E0D7bD191099125a3f6C370F8ed15",
+    PaymentVault: "0xA94B7f0465E98609391C623d0560C5720a3f2D33",
+};
 
 export const NETWORKS = {
     local: {
