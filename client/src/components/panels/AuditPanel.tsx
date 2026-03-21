@@ -30,6 +30,8 @@ function formatArgs(event: string, args: any): Record<string, string> {
                 return { 'Project #': args.projectId?.toString(), Name: args.name, Budget: args.budget?.toString() + ' wei' }
             case 'FundsLocked':
                 return { 'Project #': args.projectId?.toString(), Amount: args.amount?.toString() + ' wei' }
+            case 'MilestoneCreated':
+                return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString(), Amount: args.amount?.toString() + ' wei' }
             case 'ClaimSubmitted':
                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString() }
             case 'InspectorApproved':

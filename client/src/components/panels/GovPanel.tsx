@@ -133,6 +133,24 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
                     <Field label="Milestone Budget (ETH)" type="number" placeholder="0.5" value={ms.amount} onChange={e => setMs({ ...ms, amount: e.target.value })} className="" />
                     <Btn loading={loading === 'milestone'} onClick={createMilestone}><Milestone className="h-3.5 w-3.5" /> Create Milestone</Btn>
                 </Card>
+
+                <Card title="Release Payment" desc="Final payout for an approved milestone">
+                    <div className="flex gap-2">
+                        <Field label="P-ID" type="number" placeholder="1" value={ms.projectId} onChange={e => setMs({ ...ms, projectId: e.target.value })} className="w-20" />
+                        <Field label="M-ID" type="number" placeholder="1" value={ms.amount} onChange={e => setMs({ ...ms, amount: e.target.value })} className="flex-1" />
+                    </div>
+                    <Btn loading={loading === 'release'} onClick={async () => {
+                        if (!contracts) return toast.error('Connect wallet first')
+                        setLoading('release')
+                        try {
+                            const tx = await contracts.vault.release(Number(ms.projectId), Number(ms.amount))
+                            await tx.wait()
+                            toast.success('Money released to contractor! ✅')
+                        } catch (e: any) {
+                            toast.error(e?.reason ?? 'Check if milestone is APPROVED')
+                        } finally { setLoading(null) }
+                    }}><Plus className="h-3.5 w-3.5 rotate-45" /> Send Funds</Btn>
+                </Card>
             </div>
         </div>
     )
