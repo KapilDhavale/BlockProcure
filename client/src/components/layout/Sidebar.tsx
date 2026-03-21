@@ -1,9 +1,10 @@
-import { Building2, HardHat, Search, ScrollText } from 'lucide-react'
+import { Building2, HardHat, Search, ScrollText, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type TabId = 'gov' | 'contractor' | 'inspector' | 'audit'
+export type TabId = 'dashboard' | 'gov' | 'contractor' | 'inspector' | 'audit'
 
 const NAV_ITEMS: { id: TabId; label: string; icon: React.ElementType; desc: string }[] = [
+    { id: 'dashboard', label: 'My Projects', icon: LayoutDashboard, desc: 'Project overview & statuses' },
     { id: 'gov', label: 'Government', icon: Building2, desc: 'Create projects & lock funds' },
     { id: 'contractor', label: 'Contractor', icon: HardHat, desc: 'Submit claim & evidence' },
     { id: 'inspector', label: 'Inspector', icon: Search, desc: 'Approve milestones' },

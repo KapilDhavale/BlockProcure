@@ -3,12 +3,15 @@ import { ethers } from 'ethers'
 import { Toaster } from 'sonner'
 import { TopBar } from '@/components/layout/TopBar'
 import { Sidebar, type TabId } from '@/components/layout/Sidebar'
+import { DashboardPanel } from '@/components/panels/DashboardPanel'
 import { GovPanel } from '@/components/panels/GovPanel'
 import { ContractorPanel } from '@/components/panels/ContractorPanel'
 import { InspectorPanel } from '@/components/panels/InspectorPanel'
 import { AuditPanel } from '@/components/panels/AuditPanel'
 import { getContracts, type Contracts } from '@/lib/contracts'
 import { Building2, ShieldCheck, Zap } from 'lucide-react'
+
+// ... remaining landing page code ...
 
 declare global {
   interface Window { ethereum?: any }
@@ -90,7 +93,7 @@ export default function App() {
   const [account, setAccount] = useState<string | null>(null)
   const [network, setNetwork] = useState<ethers.providers.Network | null>(null)
   const [contracts, setContracts] = useState<Contracts | null>(null)
-  const [tab, setTab] = useState<TabId>('gov')
+  const [tab, setTab] = useState<TabId>('dashboard')
 
   const connect = async () => {
     if (!window.ethereum) return alert('Please install MetaMask')
@@ -137,6 +140,7 @@ export default function App() {
             <Sidebar active={tab} onChange={setTab} account={account} />
             <main className="flex-1 overflow-y-auto p-6">
               <div className="max-w-4xl mx-auto">
+                {tab === 'dashboard' && <DashboardPanel contracts={contracts} account={account} />}
                 {tab === 'gov' && <GovPanel contracts={contracts} />}
                 {tab === 'contractor' && <ContractorPanel contracts={contracts} />}
                 {tab === 'inspector' && <InspectorPanel contracts={contracts} />}
