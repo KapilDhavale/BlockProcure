@@ -58,9 +58,9 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
             const tx = await contracts.registry.createProject(
                 proj.name,
                 ethers.utils.parseEther(proj.budget || '0'),
-                proj.contractor,
-                [proj.inspector1, proj.inspector2],
-                parseInt(proj.required),
+                proj.contractor.trim().toLowerCase(),
+                [proj.inspector1.trim().toLowerCase(), proj.inspector2.trim().toLowerCase()],
+                parseInt(proj.required || '2'),
             )
             const receipt = await tx.wait()
             const event = receipt.events?.find((e: any) => e.event === 'ProjectCreated')

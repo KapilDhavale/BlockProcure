@@ -111,6 +111,13 @@ export default function App() {
     window.ethereum.on('chainChanged', () => window.location.reload())
   }, [])
 
+  const logout = () => {
+    setAccount(null)
+    setProvider(null)
+    setContracts(null)
+    setNetwork(null)
+  }
+
   const networkName = network
     ? (network.chainId === 1337 || network.chainId === 1774013124061
       ? 'Ganache Local'
@@ -121,7 +128,7 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors closeButton />
       <div className="flex flex-col min-h-screen bg-zinc-50">
-        <TopBar account={account} networkName={networkName} onConnect={connect} />
+        <TopBar account={account} networkName={networkName} onConnect={connect} onLogout={logout} />
 
         {!account ? (
           <LandingPage onConnect={connect} />

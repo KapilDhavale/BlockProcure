@@ -5,9 +5,10 @@ interface TopBarProps {
     account: string | null
     networkName: string | null
     onConnect: () => void
+    onLogout: () => void
 }
 
-export function TopBar({ account, networkName, onConnect }: TopBarProps) {
+export function TopBar({ account, networkName, onConnect, onLogout }: TopBarProps) {
     const short = account ? `${account.slice(0, 6)}…${account.slice(-4)}` : null
 
     return (
@@ -28,9 +29,17 @@ export function TopBar({ account, networkName, onConnect }: TopBarProps) {
                     </div>
                 )}
                 {account ? (
-                    <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="font-mono text-xs text-zinc-700">{short}</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="font-mono text-xs text-zinc-700">{short}</span>
+                        </div>
+                        <button
+                            onClick={onLogout}
+                            className="text-xs text-zinc-400 hover:text-red-500 transition-colors font-medium border-l border-zinc-200 pl-3"
+                        >
+                            Log Out
+                        </button>
                     </div>
                 ) : (
                     <button
