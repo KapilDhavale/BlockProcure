@@ -1,465 +1,664 @@
-// import { useState } from 'react'
-// import { ethers } from 'ethers'
-// import { Loader2, CheckCircle, Search } from 'lucide-react'
-// import { toast } from 'sonner'
-// import { cn } from '@/lib/utils'
-// import { StatusBadge } from '@/components/shared/StatusBadge'
-// import type { Contracts } from '@/lib/contracts'
-
-// function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-//     return (
-//         <div>
-//             <label className="block text-xs font-medium text-zinc-500 mb-1">{label}</label>
-//             <input {...props} className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors" />
-//         </div>
-//     )
-// }
-
-// export function InspectorPanel({ contracts }: { contracts: Contracts | null }) {
-//     const [projectId, setProjectId] = useState('')
-//     const [milestoneId, setMilestoneId] = useState('')
-//     const [report, setReport] = useState('')
-//     const [status, setStatus] = useState<number | null>(null)
-//     const [checking, setChecking] = useState(false)
-//     const [loading, setLoading] = useState(false)
-
-//     const checkStatus = async () => {
-//         if (!contracts) return toast.error('Connect wallet first')
-//         setChecking(true)
-//         try {
-//             const state = await contracts.milestone.getMilestoneState(parseInt(projectId), parseInt(milestoneId))
-//             setStatus(Number(state))
-//         } catch (e: any) {
-//             toast.error(e?.reason ?? e?.message ?? 'Failed to fetch status')
-//         } finally { setChecking(false) }
-//     }
-
-//     const approve = async () => {
-//         if (!contracts) return toast.error('Connect wallet first')
-//         if (!report.trim()) return toast.error('Enter your inspection report')
-//         setLoading(true)
-//         try {
-//             const reportHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))
-//             const tx = await contracts.milestone.approve(parseInt(projectId), parseInt(milestoneId), reportHash)
-//             await tx.wait()
-//             toast.success('Approval submitted!', { description: 'Report hash stored on-chain permanently' })
-//             // Refresh status
-//             const newState = await contracts.milestone.getMilestoneState(parseInt(projectId), parseInt(milestoneId))
-//             setStatus(Number(newState))
-//         } catch (e: any) {
-//             toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
-//         } finally { setLoading(false) }
-//     }
-
-//     return (
-//         <div className="space-y-4">
-//             <div>
-//                 <h2 className="text-lg font-semibold text-zinc-900">Inspector Panel</h2>
-//                 <p className="text-sm text-zinc-500 mt-0.5">Review milestone claims and submit cryptographically-signed approvals.</p>
-//             </div>
-
-//             {/* Status checker */}
-//             <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-//                 <div className="px-5 py-4 border-b border-zinc-100">
-//                     <h3 className="text-sm font-semibold text-zinc-900">Milestone Status</h3>
-//                     <p className="text-xs text-zinc-500 mt-0.5">Check current state before approving</p>
-//                 </div>
-//                 <div className="px-5 py-4 space-y-3">
-//                     <div className="grid grid-cols-2 gap-3">
-//                         <Field label="Project ID" type="number" placeholder="1" value={projectId} onChange={e => setProjectId(e.target.value)} className="" />
-//                         <Field label="Milestone ID" type="number" placeholder="1" value={milestoneId} onChange={e => setMilestoneId(e.target.value)} className="" />
-//                     </div>
-//                     <div className="flex items-center gap-3">
-//                         <button
-//                             onClick={checkStatus}
-//                             disabled={checking}
-//                             className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors disabled:opacity-50"
-//                         >
-//                             {checking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-//                             Check Status
-//                         </button>
-//                         {status !== null && <StatusBadge state={status} />}
-//                     </div>
-//                 </div>
-//             </div>
-
-//             {/* Approval form */}
-//             <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-//                 <div className="px-5 py-4 border-b border-zinc-100">
-//                     <h3 className="text-sm font-semibold text-zinc-900">Submit Approval</h3>
-//                     <p className="text-xs text-zinc-500 mt-0.5">Your report is hashed and stored on-chain — immutable and tamper-proof</p>
-//                 </div>
-//                 <div className="px-5 py-4 space-y-3">
-//                     <div>
-//                         <label className="block text-xs font-medium text-zinc-500 mb-1">Inspection Report</label>
-//                         <textarea
-//                             rows={5}
-//                             value={report}
-//                             onChange={e => setReport(e.target.value)}
-//                             placeholder="Describe your physical site inspection findings, material quality checks, and compliance notes…"
-//                             className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none"
-//                         />
-//                     </div>
-//                     {report && (
-//                         <div className="rounded-lg bg-zinc-50 border border-zinc-100 px-3 py-2">
-//                             <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-1">Report hash (stored on-chain)</p>
-//                             <p className="font-mono text-xs text-zinc-600 break-all">
-//                                 {ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))}
-//                             </p>
-//                         </div>
-//                     )}
-//                     <button
-//                         onClick={approve}
-//                         disabled={loading || status !== 1}
-//                         className={cn(
-//                             'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors',
-//                             status === 1
-//                                 ? 'bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50'
-//                                 : 'bg-zinc-300 cursor-not-allowed'
-//                         )}
-//                     >
-//                         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
-//                         {status !== 1 ? 'Milestone must be UNDER REVIEW to approve' : 'Sign Approval'}
-//                     </button>
-//                 </div>
-//             </div>
-//         </div>
-//     )
-// }
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
-import { Loader2, CheckCircle2, Search, AlertCircle, Clock, XCircle, BadgeCheck } from 'lucide-react'
+import { Loader2, CheckCircle2, RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contracts } from '@/lib/contracts'
 
-function SectionHeader({ title, desc }: { title: string; desc: string }) {
+/* ─── TYPES ─── */
+
+type MilestoneState = 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'PAID'
+
+interface InspectorMilestone {
+  id: number
+  projectId: number
+  projectName: string
+  projectLabel: string
+  description: string
+  amount: number
+  state: MilestoneState
+  approvalCount: number
+  requiredApprovals: number
+  hasApproved: boolean
+}
+
+/* ─── HELPERS ─── */
+
+const STATE_MAP: Record<number, MilestoneState> = {
+  0: 'PENDING',
+  1: 'UNDER_REVIEW',
+  2: 'APPROVED',
+  3: 'PAID',
+}
+
+const STATE_META: Record<MilestoneState, { label: string; color: string; bg: string; border: string }> = {
+  PENDING:      { label: 'PENDING',      color: 'var(--text-dim)', bg: 'rgba(74,80,105,0.12)',  border: 'rgba(74,80,105,0.2)'  },
+  UNDER_REVIEW: { label: 'UNDER REVIEW', color: 'var(--gold)',     bg: 'rgba(201,162,77,0.12)', border: 'rgba(201,162,77,0.2)' },
+  APPROVED:     { label: 'APPROVED',     color: 'var(--green)',    bg: 'rgba(77,187,138,0.12)', border: 'rgba(77,187,138,0.2)' },
+  PAID:         { label: 'PAID',         color: 'var(--blue)',     bg: 'rgba(74,158,255,0.12)', border: 'rgba(74,158,255,0.2)' },
+}
+
+function fmt(wei: ethers.BigNumber): number {
+  return parseFloat(parseFloat(ethers.utils.formatEther(wei)).toFixed(4))
+}
+
+/* ─── FETCHING ─── */
+
+async function fetchInspectorMilestones(
+  contracts: Contracts,
+  account: string
+): Promise<InspectorMilestone[]> {
+  console.log('fetchInspectorMilestones called — account:', account)
+  const projectCount: number = (await contracts.registry.projectCount()).toNumber()
+  if (projectCount === 0) return []
+
+  const results: InspectorMilestone[] = []
+
+  await Promise.all(
+    Array.from({ length: projectCount }, (_, i) => i + 1).map(async (pid) => {
+      const [raw, role] = await Promise.all([
+        contracts.registry.getProject(pid),
+        contracts.registry.projectRoles(pid, account),
+      ])
+      // ADD THIS TEMPORARILY
+console.log(`Project ${pid} — account: ${account} — role: ${Number(role)}`)
+      // Role.INSPECTOR = 3
+      if (Number(role) !== 3) return
+
+      const msCount: number = (await contracts.milestone.milestoneCount(pid)).toNumber()
+      if (msCount === 0) return
+
+      await Promise.all(
+        Array.from({ length: msCount }, (_, j) => j + 1).map(async (mid) => {
+          const [stateRaw, amount, ms] = await Promise.all([
+            contracts.milestone.getMilestoneState(pid, mid),
+            contracts.milestone.getMilestoneAmount(pid, mid),
+            contracts.milestone.milestones(pid, mid),
+          ])
+
+          const state = STATE_MAP[Number(stateRaw)] ?? 'PENDING'
+          const approvalCount = Number(ms.approvalCount)
+          const requiredApprovals = Number(raw.requiredApprovals)
+
+          // If APPROVED or PAID, the inspector has likely already approved.
+          // For UNDER_REVIEW we can't directly read hasApproved mapping from ethers
+          // without a dedicated getter — so we conservatively allow approval attempts
+          // and let the contract revert if already approved.
+          const hasApproved = state === 'APPROVED' || state === 'PAID'
+
+          results.push({
+            id: mid,
+            projectId: pid,
+            projectName: raw.name as string,
+            projectLabel: `PRJ-${String(pid).padStart(4, '0')}`,
+            description: ms.description as string,
+            amount: fmt(amount as ethers.BigNumber),
+            state,
+            approvalCount,
+            requiredApprovals,
+            hasApproved,
+          })
+        })
+      )
+    })
+  )
+
+  // Sort: UNDER_REVIEW first (actionable), then rest
+  return results.sort((a, b) => {
+    const order: Record<MilestoneState, number> = {
+      UNDER_REVIEW: 0, PENDING: 1, APPROVED: 2, PAID: 3,
+    }
+    return order[a.state] - order[b.state]
+  })
+}
+
+/* ─── COMPONENT ─── */
+
+interface InspectorPanelProps {
+  contracts: Contracts | null
+  account:   string | null
+}
+
+export function InspectorPanel({ contracts, account }: InspectorPanelProps) {
+  const [milestones, setMilestones] = useState<InspectorMilestone[]>([])
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState<string | null>(null)
+  const [selected, setSelected]     = useState<InspectorMilestone | null>(null)
+
+  const [report, setReport]         = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted]   = useState(false)
+
+  const reportHash = report.trim()
+    ? ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))
+    : ''
+
+  /* ─── LOAD ─── */
+
+  const load = useCallback(async () => {
+    console.log('load called — contracts:', !!contracts, 'account:', account)
+    if (!contracts || !account) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchInspectorMilestones(contracts, account)
+      setMilestones(data)
+      setSelected(prev =>
+        prev ? (data.find(m => m.id === prev.id && m.projectId === prev.projectId) ?? null) : null
+      )
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load milestones')
+    } finally {
+      setLoading(false)
+    }
+  }, [contracts, account])
+
+  useEffect(() => { load() }, [load])
+
+  /* ─── APPROVE ─── */
+
+  const approve = async () => {
+    if (!contracts || !selected) return
+    if (!report.trim()) return toast.error('Enter your inspection report')
+    setSubmitting(true)
+    try {
+      const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))
+      const tx = await contracts.milestone.approve(
+        selected.projectId,
+        selected.id,
+        hash,
+      )
+      await tx.wait()
+      toast.success('Approval submitted!', { description: 'Report hash stored on-chain permanently' })
+      setSubmitted(true)
+      setReport('')
+      await load()
+      setTimeout(() => setSubmitted(false), 4000)
+    } catch (e: any) {
+      toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  /* ─── DERIVED ─── */
+
+  const queue     = milestones.filter(m => m.state === 'UNDER_REVIEW')
+  const completed = milestones.filter(m => m.state !== 'UNDER_REVIEW')
+  const canApprove = selected?.state === 'UNDER_REVIEW' && !!reportHash && !submitting
+
+  /* ─── UI ─── */
+
   return (
-    <div style={{ marginBottom: 28 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-        {title}
-      </h2>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{desc}</p>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 44px' }}>
+
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36 }}>
+        <div>
+          <p style={{
+            fontFamily: 'var(--font-mono)', fontSize: 10,
+            letterSpacing: '0.8px', textTransform: 'uppercase',
+            color: 'var(--gold)', marginBottom: 6,
+          }}>
+            Inspector Portal
+          </p>
+          <h1 style={{
+            fontFamily: 'var(--font-serif)', fontSize: 34,
+            letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1.1,
+          }}>
+            Review <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Milestones</em>
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 5, fontWeight: 300 }}>
+            Inspect submitted claims and sign on-chain approvals. Your signature is permanent and publicly attributable.
+          </p>
+        </div>
+        <button
+          onClick={load}
+          disabled={loading}
+          style={{
+            background: 'var(--surface2)', border: '1px solid var(--border)',
+            color: loading ? 'var(--text-dim)' : 'var(--text-sub)',
+            borderRadius: 9, padding: '10px 14px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontFamily: 'var(--font-sans)', fontSize: 13, transition: 'all 0.2s',
+          }}
+        >
+          <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          {loading ? 'Syncing…' : 'Refresh'}
+        </button>
+      </div>
+
+      {/* ERROR */}
+      {error && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)',
+          borderRadius: 12, padding: '14px 18px', marginBottom: 24,
+        }}>
+          <AlertCircle size={16} color="var(--red)" />
+          <p style={{ fontSize: 13, color: 'var(--red)', flex: 1 }}>{error}</p>
+          <button onClick={load} style={{
+            fontSize: 12, color: 'var(--red)', background: 'none',
+            border: 'none', cursor: 'pointer', textDecoration: 'underline',
+          }}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && !error && milestones.length === 0 && (
+        <div style={{
+          border: '1px dashed var(--border)', borderRadius: 16,
+          padding: '60px 40px', textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: 'var(--font-serif)', fontSize: 20,
+            color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 8,
+          }}>
+            No milestones assigned
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
+            You are not listed as an inspector on any active project.
+          </p>
+        </div>
+      )}
+
+      {/* MAIN GRID */}
+      {(loading || milestones.length > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16 }}>
+
+          {/* LEFT — Milestone queue */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* Pending review */}
+            <PanelCard
+              eyebrow="Queue"
+              title="Pending Review"
+              titleBadge={queue.length > 0 ? String(queue.length) : undefined}
+              desc="Milestones awaiting your approval"
+            >
+              {loading && milestones.length === 0 ? (
+                <SkeletonList rows={2} />
+              ) : queue.length === 0 ? (
+                <p style={{
+                  fontSize: 12, color: 'var(--text-dim)',
+                  fontStyle: 'italic', textAlign: 'center', padding: '16px 0',
+                }}>
+                  No milestones pending review
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {queue.map(m => (
+                    <MilestoneItem
+                      key={`${m.projectId}-${m.id}`}
+                      milestone={m}
+                      isSelected={selected?.id === m.id && selected?.projectId === m.projectId}
+                      onClick={() => { setSelected(m); setReport(''); setSubmitted(false) }}
+                    />
+                  ))}
+                </div>
+              )}
+            </PanelCard>
+
+            {/* Already reviewed */}
+            {completed.length > 0 && (
+              <PanelCard eyebrow="History" title="Already Reviewed" desc="Milestones you have processed">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {completed.map(m => (
+                    <MilestoneItem
+                      key={`${m.projectId}-${m.id}`}
+                      milestone={m}
+                      isSelected={selected?.id === m.id && selected?.projectId === m.projectId}
+                      onClick={() => setSelected(m)}
+                      dimmed
+                    />
+                  ))}
+                </div>
+              </PanelCard>
+            )}
+          </div>
+
+          {/* RIGHT — Approval panel */}
+          {!selected ? (
+            <div style={{
+              border: '1px dashed var(--border)', borderRadius: 16,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              padding: '60px 40px', textAlign: 'center',
+            }}>
+              <p style={{
+                fontFamily: 'var(--font-serif)', fontSize: 18,
+                color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 8,
+              }}>
+                Select a milestone
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>
+                Choose a milestone from the queue to review and approve.
+              </p>
+            </div>
+          ) : (
+            <PanelCard
+              eyebrow="Approval"
+              title={selected.description}
+              desc="Submit your signed inspection report on-chain"
+            >
+              {/* Meta chips */}
+              <div style={{ display: 'flex', gap: 10 }}>
+                {[
+                  { label: 'Project',   val: selected.projectName,                                    color: undefined },
+                  { label: 'Amount',    val: `${selected.amount} ETH`,                                color: undefined },
+                  { label: 'Approvals', val: `${selected.approvalCount} / ${selected.requiredApprovals}`, color: undefined },
+                  { label: 'Status',    val: STATE_META[selected.state].label,                        color: STATE_META[selected.state].color },
+                ].map(({ label, val, color }) => (
+                  <div key={label} style={{
+                    flex: 1, background: 'var(--bg)',
+                    border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px',
+                  }}>
+                    <p style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 8,
+                      letterSpacing: '0.6px', textTransform: 'uppercase',
+                      color: 'var(--text-dim)', marginBottom: 4,
+                    }}>
+                      {label}
+                    </p>
+                    <p style={{
+                      fontSize: 12, fontWeight: 500,
+                      color: color ?? 'var(--text-sub)',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {val}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Already approved / wrong state warnings */}
+              {selected.hasApproved && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: 'rgba(77,187,138,0.08)', border: '1px solid rgba(77,187,138,0.2)',
+                  borderRadius: 8, padding: '10px 14px',
+                }}>
+                  <CheckCircle2 size={14} color="var(--green)" />
+                  <p style={{
+                    fontSize: 12, color: 'var(--green)',
+                    fontFamily: 'var(--font-mono)', letterSpacing: '0.2px',
+                  }}>
+                    You have already approved this milestone.
+                  </p>
+                </div>
+              )}
+
+              {selected.state !== 'UNDER_REVIEW' && !selected.hasApproved && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)',
+                  borderRadius: 8, padding: '10px 14px',
+                }}>
+                  <AlertCircle size={14} color="var(--red)" />
+                  <p style={{
+                    fontSize: 12, color: 'var(--red)',
+                    fontFamily: 'var(--font-mono)', letterSpacing: '0.2px',
+                  }}>
+                    Milestone must be UNDER REVIEW before you can approve.
+                  </p>
+                </div>
+              )}
+
+              {/* Report textarea — only show when actionable */}
+              {!selected.hasApproved && (
+                <>
+                  <div>
+                    <p style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 9,
+                      letterSpacing: '0.6px', textTransform: 'uppercase',
+                      color: 'var(--text-dim)', marginBottom: 7,
+                    }}>
+                      Inspection Report
+                    </p>
+                    <textarea
+                      value={report}
+                      onChange={e => setReport(e.target.value)}
+                      placeholder="Describe your physical site inspection — material quality, measurements, compliance checks…"
+                      rows={5}
+                      style={{
+                        width: '100%', background: 'var(--surface2)',
+                        border: '1px solid var(--border)', borderRadius: 10,
+                        padding: '12px 14px', color: 'var(--text)',
+                        fontFamily: 'var(--font-mono)', fontSize: 12,
+                        outline: 'none', resize: 'vertical', minHeight: 120,
+                        letterSpacing: '0.3px', lineHeight: 1.6,
+                        transition: 'border-color 0.2s',
+                      }}
+                      onFocus={e => {
+                        e.target.style.borderColor = 'rgba(201,162,77,0.35)'
+                        e.target.style.boxShadow = '0 0 0 3px rgba(201,162,77,0.07)'
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = 'var(--border)'
+                        e.target.style.boxShadow = 'none'
+                      }}
+                    />
+                  </div>
+
+                  {/* Hash preview */}
+                  {reportHash && (
+                    <div style={{
+                      background: 'var(--bg)',
+                      border: '1px solid rgba(201,162,77,0.2)',
+                      borderRadius: 10, padding: 14,
+                    }}>
+                      <p style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 9,
+                        letterSpacing: '0.6px', textTransform: 'uppercase',
+                        color: 'var(--gold)', marginBottom: 8,
+                      }}>
+                        Report hash — stored on-chain
+                      </p>
+                      <p style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 11,
+                        color: 'var(--text-sub)', wordBreak: 'break-all', lineHeight: 1.6,
+                      }}>
+                        {reportHash}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Submit button */}
+                  <button
+                    onClick={approve}
+                    disabled={!canApprove}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', gap: 7,
+                      background: submitted ? 'var(--green)' : canApprove ? 'var(--gold)' : 'var(--surface3)',
+                      border: `1px solid ${submitted ? 'var(--green)' : canApprove ? 'var(--gold)' : 'var(--border)'}`,
+                      color: canApprove || submitted ? '#0d0f14' : 'var(--text-dim)',
+                      borderRadius: 9, padding: '12px 20px',
+                      fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
+                      cursor: canApprove ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.25s cubic-bezier(0.22,1,0.36,1)',
+                    }}
+                    onMouseEnter={e => {
+                      if (canApprove) {
+                        e.currentTarget.style.background = 'var(--gold2)'
+                        e.currentTarget.style.transform = 'translateY(-1px)'
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(201,162,77,0.28)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (canApprove) {
+                        e.currentTarget.style.background = submitted ? 'var(--green)' : 'var(--gold)'
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }
+                    }}
+                  >
+                    {submitting ? (
+                      <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    ) : submitted ? (
+                      <CheckCircle2 size={14} />
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7l3.5 3.5L12 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                    {submitting ? 'Submitting…' : submitted ? 'Approval Submitted!' : 'Sign Approval On-Chain'}
+                  </button>
+
+                  <p style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 10,
+                    color: 'var(--text-dim)', lineHeight: 1.6,
+                    paddingTop: 12, borderTop: '1px solid var(--border)',
+                    letterSpacing: '0.2px',
+                  }}>
+                    Your wallet address and report hash are permanently recorded on-chain.
+                    Once signed, this approval cannot be revoked or altered.
+                  </p>
+                </>
+              )}
+            </PanelCard>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-function Card({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
+/* ─── SUB-COMPONENTS ─── */
+
+function PanelCard({ eyebrow, title, titleBadge, desc, children }: {
+  eyebrow: string
+  title: string
+  titleBadge?: string
+  desc: string
+  children: React.ReactNode
+}) {
   return (
     <div style={{
-      background: 'var(--surface-0)',
-      border: '1px solid var(--border-subtle)',
-      borderRadius: 14,
-      overflow: 'hidden',
+      background: 'var(--surface)', border: '1px solid var(--border)',
+      borderRadius: 16, overflow: 'hidden',
     }}>
-      <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
-        <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</h3>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{desc}</p>
+      <div style={{
+        padding: '18px 22px 16px', borderBottom: '1px solid var(--border)',
+        background: 'var(--surface2)',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9,
+          letterSpacing: '0.7px', textTransform: 'uppercase',
+          color: 'var(--gold)', marginBottom: 4,
+        }}>
+          {eyebrow}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>{title}</p>
+          {titleBadge && (
+            <span style={{
+              fontFamily: 'var(--font-mono)', fontSize: 9,
+              background: 'var(--gold-soft)', color: 'var(--gold)',
+              border: '1px solid rgba(201,162,77,0.2)',
+              borderRadius: 99, padding: '2px 8px',
+            }}>
+              {titleBadge}
+            </span>
+          )}
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 3 }}>{desc}</p>
       </div>
-      <div style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {children}
       </div>
     </div>
   )
 }
 
-function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div>
-      <label className="field-label">{label}</label>
-      <input className="field-input" {...props} />
-    </div>
-  )
-}
-
-const STATE_CONFIG: Record<number, {
-  label: string
-  icon: React.ElementType
-  bg: string
-  color: string
-  border: string
-  note: string
-}> = {
-  0: {
-    label: 'Pending',
-    icon: Clock,
-    bg: 'var(--surface-2)',
-    color: 'var(--text-secondary)',
-    border: 'var(--border-default)',
-    note: 'Contractor has not submitted a claim yet.',
-  },
-  1: {
-    label: 'Under Review',
-    icon: AlertCircle,
-    bg: '#fefce8',
-    color: '#a16207',
-    border: '#fde68a',
-    note: 'Claim submitted — ready for inspector approval.',
-  },
-  2: {
-    label: 'Approved',
-    icon: BadgeCheck,
-    bg: '#f0fdf4',
-    color: '#15803d',
-    border: '#bbf7d0',
-    note: 'Threshold met — payment can now be released.',
-  },
-  3: {
-    label: 'Paid',
-    icon: CheckCircle2,
-    bg: '#eff6ff',
-    color: '#1d4ed8',
-    border: '#bfdbfe',
-    note: 'Payment has been released to the contractor.',
-  },
-}
-
-function StateBadge({ state }: { state: number }) {
-  const cfg = STATE_CONFIG[state]
-  if (!cfg) return null
-  const Icon = cfg.icon
-  return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 7,
-      background: cfg.bg,
-      color: cfg.color,
-      border: `1px solid ${cfg.border}`,
-      borderRadius: 99,
-      padding: '6px 14px',
-      fontSize: 12,
-      fontWeight: 600,
-    }}>
-      <Icon size={13} />
-      {cfg.label}
-    </div>
-  )
-}
-
-export function InspectorPanel({ contracts }: { contracts: Contracts | null }) {
-  const [projectId, setProjectId]   = useState('')
-  const [milestoneId, setMilestoneId] = useState('')
-  const [report, setReport]         = useState('')
-  const [status, setStatus]         = useState<number | null>(null)
-  const [checking, setChecking]     = useState(false)
-  const [loading, setLoading]       = useState(false)
-
-  const checkStatus = async () => {
-    if (!contracts) return toast.error('Connect wallet first')
-    if (!projectId || !milestoneId) return toast.error('Enter Project ID and Milestone ID')
-    setChecking(true)
-    try {
-      const state = await contracts.milestone.getMilestoneState(
-        parseInt(projectId),
-        parseInt(milestoneId),
-      )
-      setStatus(Number(state))
-    } catch (e: any) {
-      toast.error(e?.reason ?? e?.message ?? 'Failed to fetch status')
-    } finally {
-      setChecking(false)
-    }
-  }
-
-  const approve = async () => {
-    if (!contracts)     return toast.error('Connect wallet first')
-    if (!report.trim()) return toast.error('Enter your inspection report')
-    setLoading(true)
-    try {
-      const reportHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))
-      const tx = await contracts.milestone.approve(
-        parseInt(projectId),
-        parseInt(milestoneId),
-        reportHash,
-      )
-      await tx.wait()
-      toast.success('Approval submitted!', { description: 'Report hash stored on-chain permanently' })
-      const newState = await contracts.milestone.getMilestoneState(
-        parseInt(projectId),
-        parseInt(milestoneId),
-      )
-      setStatus(Number(newState))
-      setReport('')
-    } catch (e: any) {
-      toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const reportHash = report
-    ? ethers.utils.keccak256(ethers.utils.toUtf8Bytes(report))
-    : ''
-
-  const canApprove = status === 1
+function MilestoneItem({ milestone: m, isSelected, onClick, dimmed }: {
+  milestone: InspectorMilestone
+  isSelected: boolean
+  onClick: () => void
+  dimmed?: boolean
+}) {
+  const meta = STATE_META[m.state]
+  const isActionable = m.state === 'UNDER_REVIEW'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <SectionHeader
-        title="Inspector Panel"
-        desc="Review milestone claims and submit cryptographically-signed approvals. Your approval is permanent and publicly attributable."
-      />
+    <div
+      onClick={onClick}
+      style={{
+        background: isSelected ? 'var(--gold-soft)' : 'var(--surface2)',
+        border: `1px solid ${isSelected ? 'rgba(201,162,77,0.5)' : 'var(--border)'}`,
+        borderRadius: 10, padding: '13px 14px',
+        cursor: 'pointer', opacity: dimmed ? 0.6 : 1,
+        position: 'relative', overflow: 'hidden',
+        transition: 'all 0.2s',
+      }}
+      onMouseEnter={e => {
+        if (!isSelected)
+          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(201,162,77,0.3)'
+      }}
+      onMouseLeave={e => {
+        if (!isSelected)
+          (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'
+      }}
+    >
+      {/* Gold left accent for actionable items */}
+      {isActionable && (
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: 3, background: 'var(--gold)',
+        }} />
+      )}
 
-      {/* ── Status checker ── */}
-      <Card
-        title="Milestone Status"
-        desc="Verify the current state of a milestone before approving"
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 24px' }}>
-          <Field
-            label="Project ID"
-            type="number"
-            placeholder="1"
-            value={projectId}
-            onChange={e => setProjectId(e.target.value)}
-          />
-          <Field
-            label="Milestone ID"
-            type="number"
-            placeholder="1"
-            value={milestoneId}
-            onChange={e => setMilestoneId(e.target.value)}
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button
-            onClick={checkStatus}
-            disabled={checking}
-            className="btn-ghost"
-          >
-            {checking
-              ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-              : <Search size={13} />
-            }
-            Check Status
-          </button>
-
-          {status !== null && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <StateBadge state={status} />
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-                {STATE_CONFIG[status]?.note}
-              </span>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* ── Approval form ── */}
-      <Card
-        title="Submit Approval"
-        desc="Your report text is hashed client-side — only the keccak256 hash is stored on-chain as tamper-proof evidence"
-      >
-        <div>
-          <label className="field-label">Inspection Report</label>
-          <textarea
-            rows={5}
-            value={report}
-            onChange={e => setReport(e.target.value)}
-            placeholder="Describe your physical site inspection findings, material quality checks, measurement results, and compliance notes…"
-            style={{
-              width: '100%',
-              background: 'var(--surface-1)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 8,
-              padding: '10px 14px',
-              fontSize: 14,
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-sans)',
-              resize: 'vertical',
-              minHeight: 130,
-              outline: 'none',
-              transition: 'border-color 0.15s, box-shadow 0.15s',
-            }}
-            onFocus={e => {
-              e.target.style.borderColor = 'var(--accent-border)'
-              e.target.style.boxShadow = '0 0 0 3px rgba(67,56,202,0.08)'
-            }}
-            onBlur={e => {
-              e.target.style.borderColor = 'var(--border-subtle)'
-              e.target.style.boxShadow = 'none'
-            }}
-          />
-        </div>
-
-        {/* Live hash preview */}
-        {reportHash && (
-          <div style={{
-            background: 'var(--surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 8,
-            padding: '12px 14px',
-          }}>
-            <p style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--text-tertiary)',
-              marginBottom: 5,
-            }}>
-              Report hash (stored on-chain)
-            </p>
-            <p style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-              color: 'var(--text-secondary)',
-              wordBreak: 'break-all',
-              lineHeight: 1.6,
-            }}>
-              {reportHash}
-            </p>
-          </div>
-        )}
-
-        {/* Status gate warning */}
-        {status !== null && !canApprove && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: 8,
-            padding: '10px 14px',
-            fontSize: 12,
-            color: '#b91c1c',
-          }}>
-            <XCircle size={13} />
-            Milestone must be in UNDER REVIEW state before you can approve.
-          </div>
-        )}
-
-        <button
-          onClick={approve}
-          disabled={loading || !canApprove || !report.trim()}
-          className="btn-primary"
-          style={{
-            alignSelf: 'flex-start',
-            background: canApprove ? 'var(--accent)' : 'var(--surface-2)',
-            color: canApprove ? '#fff' : 'var(--text-tertiary)',
-            cursor: canApprove ? 'pointer' : 'not-allowed',
-          }}
-        >
-          {loading
-            ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-            : <CheckCircle2 size={13} />
-          }
-          Sign Approval
-        </button>
-
-        <p style={{
-          fontSize: 12,
-          color: 'var(--text-tertiary)',
-          paddingTop: 4,
-          borderTop: '1px solid var(--border-subtle)',
-          lineHeight: 1.6,
-        }}>
-          Your wallet address and report hash are permanently recorded on-chain. Once signed,
-          this approval cannot be revoked or altered.
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        alignItems: 'flex-start', gap: 8,
+        paddingLeft: isActionable ? 8 : 0,
+      }}>
+        <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', flex: 1 }}>
+          {m.description}
         </p>
-      </Card>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11,
+          color: isSelected ? 'var(--gold)' : 'var(--text-sub)', flexShrink: 0,
+        }}>
+          {m.amount} ETH
+        </p>
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        marginTop: 7, paddingLeft: isActionable ? 8 : 0,
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9,
+          color: 'var(--text-dim)', letterSpacing: '0.3px',
+        }}>
+          {m.projectLabel} · {m.projectName}
+        </p>
+        <span style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.4px',
+          padding: '3px 7px', borderRadius: 4,
+          background: meta.bg, color: meta.color, border: `1px solid ${meta.border}`,
+        }}>
+          {meta.label}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function SkeletonList({ rows }: { rows: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={{
+          height: 70, borderRadius: 10,
+          background: 'var(--surface2)', border: '1px solid var(--border)',
+          animation: 'skeletonPulse 1.6s ease-in-out infinite',
+          animationDelay: `${i * 0.1}s`,
+        }} />
+      ))}
     </div>
   )
 }

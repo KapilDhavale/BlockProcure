@@ -1,454 +1,721 @@
-// import { useState } from 'react'
-// import { ethers } from 'ethers'
-// import { Loader2, Plus, Lock, Milestone } from 'lucide-react'
-// import { toast } from 'sonner'
-// import { cn } from '@/lib/utils'
-// import type { Contracts } from '@/lib/contracts'
-
-// function Card({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
-//     return (
-//         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-//             <div className="px-5 py-4 border-b border-zinc-100">
-//                 <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
-//                 <p className="text-xs text-zinc-500 mt-0.5">{desc}</p>
-//             </div>
-//             <div className="px-5 py-4 space-y-3">{children}</div>
-//         </div>
-//     )
-// }
-
-// function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-//     return (
-//         <div>
-//             <label className="block text-xs font-medium text-zinc-500 mb-1">{label}</label>
-//             <input
-//                 {...props}
-//                 className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-colors"
-//             />
-//         </div>
-//     )
-// }
-
-// function Btn({ loading, children, ...props }: { loading?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-//     return (
-//         <button
-//             {...props}
-//             disabled={props.disabled || loading}
-//             className={cn(
-//                 'flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm',
-//                 'hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-//             )}
-//         >
-//             {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-//             {children}
-//         </button>
-//     )
-// }
-
-// export function GovPanel({ contracts }: { contracts: Contracts | null }) {
-//     const [proj, setProj] = useState({ name: '', budget: '', contractor: '', inspector1: '', inspector2: '', required: '2' })
-//     const [lock, setLock] = useState({ projectId: '', amount: '' })
-//     const [ms, setMs] = useState({ projectId: '', description: '', amount: '' })
-//     const [loading, setLoading] = useState<string | null>(null)
-
-//     const createProject = async () => {
-//         if (!contracts) return toast.error('Connect wallet first')
-//         setLoading('project')
-//         try {
-//             const tx = await contracts.registry.createProject(
-//                 proj.name,
-//                 ethers.utils.parseEther(proj.budget || '0'),
-//                 proj.contractor.trim().toLowerCase(),
-//                 [proj.inspector1.trim().toLowerCase(), proj.inspector2.trim().toLowerCase()],
-//                 parseInt(proj.required || '2'),
-//             )
-//             const receipt = await tx.wait()
-//             const event = receipt.events?.find((e: any) => e.event === 'ProjectCreated')
-//             const id = event?.args?.projectId?.toString() ?? '?'
-//             toast.success(`Project #${id} created!`, { description: `Tx: ${receipt.transactionHash.slice(0, 18)}…` })
-//         } catch (e: any) {
-//             toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
-//         } finally { setLoading(null) }
-//     }
-
-//     const lockFunds = async () => {
-//         if (!contracts) return toast.error('Connect wallet first')
-//         setLoading('lock')
-//         try {
-//             const tx = await contracts.vault.lockFunds(parseInt(lock.projectId), {
-//                 value: ethers.utils.parseEther(lock.amount || '0'),
-//             })
-//             await tx.wait()
-//             toast.success(`Locked ${lock.amount} ETH in Vault for Project #${lock.projectId}`)
-//         } catch (e: any) {
-//             toast.error(e?.reason ?? e?.message ?? 'Failed')
-//         } finally { setLoading(null) }
-//     }
-
-//     const createMilestone = async () => {
-//         if (!contracts) return toast.error('Connect wallet first')
-//         setLoading('milestone')
-//         try {
-//             const tx = await contracts.milestone.createMilestone(
-//                 parseInt(ms.projectId),
-//                 ms.description,
-//                 ethers.utils.parseEther(ms.amount || '0'),
-//             )
-//             await tx.wait()
-//             toast.success(`Milestone created for Project #${ms.projectId}`)
-//         } catch (e: any) {
-//             toast.error(e?.reason ?? e?.message ?? 'Failed')
-//         } finally { setLoading(null) }
-//     }
-
-//     return (
-//         <div className="space-y-4">
-//             <div>
-//                 <h2 className="text-lg font-semibold text-zinc-900">Government Panel</h2>
-//                 <p className="text-sm text-zinc-500 mt-0.5">Create and fund infrastructure projects, define milestones.</p>
-//             </div>
-
-//             <Card title="Create Project" desc="Register a new procurement project on-chain">
-//                 <div className="grid grid-cols-2 gap-3">
-//                     <Field label="Project Name" placeholder="Phase 1: Flyover Road" value={proj.name} onChange={e => setProj({ ...proj, name: e.target.value })} className="" />
-//                     <Field label="Total Budget (ETH)" type="number" placeholder="1.0" value={proj.budget} onChange={e => setProj({ ...proj, budget: e.target.value })} className="" />
-//                     <Field label="Contractor Address" placeholder="0x…" value={proj.contractor} onChange={e => setProj({ ...proj, contractor: e.target.value })} className="" />
-//                     <Field label="Required Approvals" type="number" placeholder="2" value={proj.required} onChange={e => setProj({ ...proj, required: e.target.value })} className="" />
-//                     <Field label="Inspector 1 Address" placeholder="0x…" value={proj.inspector1} onChange={e => setProj({ ...proj, inspector1: e.target.value })} className="" />
-//                     <Field label="Inspector 2 Address" placeholder="0x…" value={proj.inspector2} onChange={e => setProj({ ...proj, inspector2: e.target.value })} className="" />
-//                 </div>
-//                 <Btn loading={loading === 'project'} onClick={createProject}><Plus className="h-3.5 w-3.5" /> Create Project</Btn>
-//             </Card>
-
-//             <div className="grid grid-cols-2 gap-4">
-//                 <Card title="Lock Funds" desc="Deposit MATIC into the payment vault">
-//                     <Field label="Project ID" type="number" placeholder="1" value={lock.projectId} onChange={e => setLock({ ...lock, projectId: e.target.value })} className="" />
-//                     <Field label="Amount (ETH)" type="number" placeholder="1.0" value={lock.amount} onChange={e => setLock({ ...lock, amount: e.target.value })} className="" />
-//                     <Btn loading={loading === 'lock'} onClick={lockFunds}><Lock className="h-3.5 w-3.5" /> Lock Funds</Btn>
-//                 </Card>
-
-//                 <Card title="Create Milestone" desc="Define a payable work milestone">
-//                     <Field label="Project ID" type="number" placeholder="1" value={ms.projectId} onChange={e => setMs({ ...ms, projectId: e.target.value })} className="" />
-//                     <Field label="Description" placeholder="Bridge Foundation" value={ms.description} onChange={e => setMs({ ...ms, description: e.target.value })} className="" />
-//                     <Field label="Milestone Budget (ETH)" type="number" placeholder="0.5" value={ms.amount} onChange={e => setMs({ ...ms, amount: e.target.value })} className="" />
-//                     <Btn loading={loading === 'milestone'} onClick={createMilestone}><Milestone className="h-3.5 w-3.5" /> Create Milestone</Btn>
-//                 </Card>
-
-//                 <Card title="Release Payment" desc="Final payout for an approved milestone">
-//                     <div className="flex gap-2">
-//                         <Field label="P-ID" type="number" placeholder="1" value={ms.projectId} onChange={e => setMs({ ...ms, projectId: e.target.value })} className="w-20" />
-//                         <Field label="M-ID" type="number" placeholder="1" value={ms.amount} onChange={e => setMs({ ...ms, amount: e.target.value })} className="flex-1" />
-//                     </div>
-//                     <Btn loading={loading === 'release'} onClick={async () => {
-//                         if (!contracts) return toast.error('Connect wallet first')
-//                         setLoading('release')
-//                         try {
-//                             const tx = await contracts.vault.release(Number(ms.projectId), Number(ms.amount))
-//                             await tx.wait()
-//                             toast.success('Money released to contractor! ✅')
-//                         } catch (e: any) {
-//                             toast.error(e?.reason ?? 'Check if milestone is APPROVED')
-//                         } finally { setLoading(null) }
-//                     }}><Plus className="h-3.5 w-3.5 rotate-45" /> Send Funds</Btn>
-//                 </Card>
-//             </div>
-//         </div>
-//     )
-// }
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
-import { Loader2, Plus, Lock, Flag, Send } from 'lucide-react'
+import { Plus, X, Lock, Flag, Send, RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contracts } from '@/lib/contracts'
 
-/* ── Shared primitives ─────────────────────── */
+type InputEvent = React.ChangeEvent<HTMLInputElement>
 
-function SectionHeader({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div style={{ marginBottom: 28 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-        {title}
-      </h2>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{desc}</p>
-    </div>
-  )
+/* ─── TYPES ─── */
+
+type StatusKey = 'pending' | 'progress' | 'review' | 'complete'
+
+interface Project {
+  id: number
+  name: string
+  projectId: string
+  budget: number
+  used: number
+  locked: number           // ETH locked in vault for this project
+  totalBudgetWei: ethers.BigNumber
+  contractor: string
+  inspectors: string[]
+  requiredApprovals: number
+  active: boolean
+  status: StatusKey
+  statusLabel: string
+  milestoneCount: number
+  paidMilestones: number
 }
 
-function Card({
-  title, desc, children, accent = false,
-}: {
-  title: string; desc: string; children: React.ReactNode; accent?: boolean
-}) {
-  return (
-    <div
-      style={{
-        background: 'var(--surface-0)',
-        border: `1px solid ${accent ? 'var(--accent-border)' : 'var(--border-subtle)'}`,
-        borderRadius: 14,
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          padding: '20px 24px 16px',
-          borderBottom: '1px solid var(--border-subtle)',
-          background: accent ? 'var(--accent-light)' : 'transparent',
-        }}
-      >
-        <h3 style={{ fontSize: 14, fontWeight: 600, color: accent ? 'var(--accent)' : 'var(--text-primary)' }}>
-          {title}
-        </h3>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>{desc}</p>
-      </div>
-      <div style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {children}
-      </div>
-    </div>
-  )
+/* ─── HELPERS ─── */
+
+function deriveStatus(milestoneCount: number, paidMilestones: number, active: boolean): StatusKey {
+  if (!active) return 'complete'
+  if (milestoneCount === 0) return 'pending'
+  if (paidMilestones === milestoneCount) return 'complete'
+  if (paidMilestones > 0) return 'progress'
+  return 'pending'
 }
 
-function Field({
-  label,
-  ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div>
-      <label className="field-label">{label}</label>
-      <input className="field-input" {...props} />
-    </div>
-  )
+const STATUS_META: Record<StatusKey, { label: string; color: string; bg: string; border: string }> = {
+  pending:  { label: 'PENDING',      color: 'var(--text-dim)', bg: 'rgba(74,80,105,0.12)',  border: 'rgba(74,80,105,0.2)'  },
+  progress: { label: 'IN PROGRESS',  color: 'var(--blue)',     bg: 'rgba(74,158,255,0.12)', border: 'rgba(74,158,255,0.2)' },
+  review:   { label: 'UNDER REVIEW', color: 'var(--gold)',     bg: 'rgba(201,162,77,0.12)', border: 'rgba(201,162,77,0.2)' },
+  complete: { label: 'COMPLETED',    color: 'var(--green)',    bg: 'rgba(77,187,138,0.12)', border: 'rgba(77,187,138,0.2)' },
 }
 
-function Btn({
-  loading, icon: Icon, children, variant = 'primary', ...props
-}: {
-  loading?: boolean
-  icon?: React.ElementType
-  variant?: 'primary' | 'ghost'
-} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      {...props}
-      disabled={props.disabled || loading}
-      className={variant === 'primary' ? 'btn-primary' : 'btn-ghost'}
-      style={{ alignSelf: 'flex-start', ...(props.style ?? {}) }}
-    >
-      {loading
-        ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-        : Icon && <Icon size={13} />
+function fmt(wei: ethers.BigNumber, decimals = 4): number {
+  return parseFloat(parseFloat(ethers.utils.formatEther(wei)).toFixed(decimals))
+}
+
+/* ─── FETCH LOCKED FUNDS via FundsLocked events ─── */
+
+async function fetchLockedFunds(
+  contracts: Contracts,
+  projectId: number
+): Promise<number> {
+  try {
+    // Filter FundsLocked(projectId, amount) events for this project
+    const filter = contracts.vault.filters.FundsLocked(projectId)
+    const events = await contracts.vault.queryFilter(filter)
+
+    // Sum all locked amounts for this project
+    const totalWei = events.reduce((sum, evt) => {
+      const amount = evt.args?.amount as ethers.BigNumber
+      return sum.add(amount ?? ethers.BigNumber.from(0))
+    }, ethers.BigNumber.from(0))
+
+    return fmt(totalWei)
+  } catch {
+    return 0
+  }
+}
+
+/* ─── FETCHING PROJECTS ─── */
+
+async function fetchProjects(contracts: Contracts): Promise<Project[]> {
+  const count: number = (await contracts.registry.projectCount()).toNumber()
+  if (count === 0) return []
+
+  const projects = await Promise.all(
+    Array.from({ length: count }, (_, i) => i + 1).map(async (id) => {
+      const raw = await contracts.registry.getProject(id)
+      const msCount: number = (await contracts.milestone.milestoneCount(id)).toNumber()
+
+      let paidWei = ethers.BigNumber.from(0)
+      let paidMilestones = 0
+
+      if (msCount > 0) {
+        const milestoneData = await Promise.all(
+          Array.from({ length: msCount }, (_, j) => j + 1).map(async (mid) => {
+            const [isPaid, amount] = await Promise.all([
+              contracts.vault.released(id, mid),
+              contracts.milestone.getMilestoneAmount(id, mid),
+            ])
+            return { isPaid: isPaid as boolean, amount: amount as ethers.BigNumber }
+          })
+        )
+        for (const m of milestoneData) {
+          if (m.isPaid) {
+            paidWei = paidWei.add(m.amount)
+            paidMilestones++
+          }
+        }
       }
+
+      // Fetch locked funds from events
+      const locked = await fetchLockedFunds(contracts, id)
+      const status = deriveStatus(msCount, paidMilestones, raw.active)
+
+      return {
+        id,
+        name: raw.name,
+        projectId: `PRJ-${String(id).padStart(4, '0')}`,
+        budget: fmt(raw.totalBudget),
+        used: fmt(paidWei),
+        locked,
+        totalBudgetWei: raw.totalBudget as ethers.BigNumber,
+        contractor: raw.contractor as string,
+        inspectors: raw.inspectors as string[],
+        requiredApprovals: (raw.requiredApprovals as ethers.BigNumber).toNumber(),
+        active: raw.active as boolean,
+        status,
+        statusLabel: STATUS_META[status].label,
+        milestoneCount: msCount,
+        paidMilestones,
+      } satisfies Project
+    })
+  )
+
+  return projects
+}
+
+/* ─── COMPONENT ─── */
+
+export function GovPanel({ contracts }: { contracts: Contracts | null }) {
+  const [projects, setProjects]               = useState<Project[]>([])
+  const [loading, setLoading]                 = useState(false)
+  const [error, setError]                     = useState<string | null>(null)
+  const [selectedProject, setSelectedProject] = useState<number | null>(null)
+  const [activeProject, setActiveProject]     = useState<Project | null>(null)
+  const [showModal, setShowModal]             = useState(false)
+  const [isClosing, setIsClosing]             = useState(false)
+
+  const [proj, setProj] = useState({
+    name: '', budget: '', contractor: '', inspector1: '', inspector2: '',
+  })
+  const [amount, setAmount]       = useState('')
+  const [milestone, setMilestone] = useState({ description: '', amount: '' })
+  const [releaseId, setReleaseId] = useState('')
+
+  /* ─── LOAD ─── */
+
+  const load = useCallback(async () => {
+    if (!contracts) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchProjects(contracts)
+      setProjects(data)
+      setActiveProject(prev => prev ? (data.find(p => p.id === prev.id) ?? prev) : null)
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load projects')
+    } finally {
+      setLoading(false)
+    }
+  }, [contracts])
+
+  useEffect(() => { load() }, [load])
+
+  const totalAllocated = projects.reduce((s, p) => s + p.budget, 0)
+  const totalReleased  = projects.reduce((s, p) => s + p.used, 0)
+  const totalLocked    = projects.reduce((s, p) => s + p.locked, 0)
+  const pendingCount   = projects.filter(p => p.status === 'pending' || p.status === 'review').length
+
+  /* ─── ACTIONS ─── */
+
+  const createProject = async () => {
+    if (!contracts) return toast.error('Connect wallet')
+    if (!proj.name.trim())       return toast.error('Enter a project name')
+    if (!proj.budget)            return toast.error('Enter a budget')
+    if (!proj.contractor.trim()) return toast.error('Enter a contractor address')
+    if (!proj.inspector1.trim()) return toast.error('Enter at least one inspector address')
+
+    const inspectors = [proj.inspector1.trim(), proj.inspector2.trim()].filter(Boolean)
+    const requiredApprovals = inspectors.length
+
+    try {
+      const tx = await contracts.registry.createProject(
+        proj.name.trim(),
+        ethers.utils.parseEther(proj.budget || '0'),
+        proj.contractor.trim(),
+        inspectors,
+        requiredApprovals,
+      )
+      await tx.wait()
+      toast.success('Project created', {
+        description: `${inspectors.length} inspector${inspectors.length > 1 ? 's' : ''} registered`,
+      })
+      setShowModal(false)
+      setProj({ name: '', budget: '', contractor: '', inspector1: '', inspector2: '' })
+      await load()
+    } catch (e: any) {
+      toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
+    }
+  }
+
+  const lockFunds = async () => {
+    if (!contracts || !selectedProject) return
+    if (!amount) return toast.error('Enter an amount')
+    try {
+      const tx = await contracts.vault.lockFunds(selectedProject, {
+        value: ethers.utils.parseEther(amount),
+      })
+      await tx.wait()
+      toast.success('Funds locked to vault')
+      setAmount('')
+      await load()
+    } catch (e: any) { toast.error(e?.reason ?? e?.message ?? 'Transaction failed') }
+  }
+
+  const createMilestone = async () => {
+    if (!contracts || !selectedProject) return
+    if (!milestone.description || !milestone.amount) return toast.error('Fill in all fields')
+    try {
+      const tx = await contracts.milestone.createMilestone(
+        selectedProject,
+        milestone.description,
+        ethers.utils.parseEther(milestone.amount),
+      )
+      await tx.wait()
+      toast.success('Milestone created')
+      setMilestone({ description: '', amount: '' })
+      await load()
+    } catch (e: any) { toast.error(e?.reason ?? e?.message ?? 'Transaction failed') }
+  }
+
+  const releasePayment = async () => {
+    if (!contracts || !selectedProject) return
+    if (!releaseId) return toast.error('Enter a milestone ID')
+    try {
+      const tx = await contracts.vault.release(selectedProject, parseInt(releaseId))
+      await tx.wait()
+      toast.success('Payment released')
+      setReleaseId('')
+      await load()
+    } catch (e: any) { toast.error(e?.reason ?? e?.message ?? 'Transaction failed') }
+  }
+
+  const openPanel = (p: Project) => {
+    setSelectedProject(p.id)
+    setActiveProject(p)
+    setIsClosing(false)
+  }
+
+  const closePanel = () => {
+    setIsClosing(true)
+    setTimeout(() => { setActiveProject(null); setSelectedProject(null); setIsClosing(false) }, 360)
+  }
+
+  /* ─── UI ─── */
+
+  return (
+    <>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 44px' }}>
+
+        {/* HEADER */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36 }}>
+          <div>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 6 }}>
+              Ministry of Infrastructure
+            </p>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 34, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1.1 }}>
+              Government <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Dashboard</em>
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 5, fontWeight: 300 }}>
+              Infrastructure fund management · {projects.length} project{projects.length !== 1 ? 's' : ''} on-chain
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={load} disabled={loading} style={{
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              color: loading ? 'var(--text-dim)' : 'var(--text-sub)',
+              borderRadius: 9, padding: '10px 14px', cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: 'var(--font-sans)', fontSize: 13, transition: 'all 0.2s',
+            }}>
+              <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+              {loading ? 'Syncing…' : 'Refresh'}
+            </button>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={14} /> New Project
+            </button>
+          </div>
+        </div>
+
+        {/* STATS — now includes total locked */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 13, marginBottom: 40 }}>
+          <StatCard
+            label="Total Projects"
+            value={loading && projects.length === 0 ? '…' : String(projects.length)}
+            hint={`· ${projects.filter(p => p.active).length} active`}
+            hintType="up" fill={100}
+          />
+          <StatCard
+            label="Vault Locked"
+            value={loading && projects.length === 0 ? '…' : `${totalLocked.toFixed(2)} ETH`}
+            hint="⬡ In escrow"
+            hintType="warn"
+            fill={totalAllocated > 0 ? Math.min(100, (totalLocked / totalAllocated) * 100) : 0}
+          />
+          <StatCard
+            label="Released"
+            value={loading && projects.length === 0 ? '…' : `${totalReleased.toFixed(2)} ETH`}
+            hint={totalLocked > 0 ? `↑ ${((totalReleased / totalLocked) * 100).toFixed(0)}% of locked` : '· no payouts yet'}
+            hintType="up"
+            fill={totalLocked > 0 ? (totalReleased / totalLocked) * 100 : 0}
+          />
+          <StatCard
+            label="Pending Review"
+            value={loading && projects.length === 0 ? '…' : String(pendingCount)}
+            hint={pendingCount > 0 ? '⚑ Awaiting sign-off' : '✓ All clear'}
+            hintType={pendingCount > 0 ? 'warn' : 'up'}
+            fill={projects.length > 0 ? (pendingCount / projects.length) * 100 : 0}
+          />
+        </div>
+
+        {/* SECTION LABEL */}
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.9px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 16 }}>
+          Projects
+        </p>
+
+        {/* ERROR */}
+        {error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 20 }}>
+            <AlertCircle size={16} color="var(--red)" />
+            <p style={{ fontSize: 13, color: 'var(--red)', flex: 1 }}>{error}</p>
+            <button onClick={load} style={{ fontSize: 12, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Retry</button>
+          </div>
+        )}
+
+        {/* SKELETONS */}
+        {loading && projects.length === 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>
+            {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
+          </div>
+        )}
+
+        {/* EMPTY */}
+        {!loading && !error && projects.length === 0 && (
+          <div style={{ border: '1px dashed var(--border)', borderRadius: 16, padding: '60px 40px', textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 8 }}>No projects yet</p>
+            <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 20 }}>Create your first infrastructure project to get started.</p>
+            <button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={14} /> New Project</button>
+          </div>
+        )}
+
+        {/* PROJECT CARDS */}
+        {projects.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>
+            {projects.map(p => (
+              <ProjectCard key={p.id} project={p} isActive={selectedProject === p.id} onClick={() => openPanel(p)} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CREATE PROJECT MODAL */}
+      {showModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(8,9,12,0.85)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
+        >
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 20, padding: 32, width: 480, boxShadow: '0 40px 80px rgba(0,0,0,0.6)', animation: 'modalIn 0.35s cubic-bezier(0.22,1,0.36,1)' }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text)', marginBottom: 4 }}>Create Project</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 26 }}>Register a new infrastructure project on-chain</p>
+
+            <Field label="Project Name">
+              <Input placeholder="e.g. Northern Highway Phase III" value={proj.name}
+                onChange={(e: InputEvent) => setProj({ ...proj, name: e.target.value })} />
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
+              <Field label="Budget (ETH)">
+                <Input placeholder="0.00" type="number" value={proj.budget}
+                  onChange={(e: InputEvent) => setProj({ ...proj, budget: e.target.value })} />
+              </Field>
+              <Field label="Contractor Address">
+                <Input placeholder="0x..." value={proj.contractor}
+                  onChange={(e: InputEvent) => setProj({ ...proj, contractor: e.target.value })} />
+              </Field>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11 }}>
+              <Field label="Inspector 1 *">
+                <Input placeholder="0x..." value={proj.inspector1}
+                  onChange={(e: InputEvent) => setProj({ ...proj, inspector1: e.target.value })} />
+              </Field>
+              <Field label="Inspector 2 (optional)">
+                <Input placeholder="0x..." value={proj.inspector2}
+                  onChange={(e: InputEvent) => setProj({ ...proj, inspector2: e.target.value })} />
+              </Field>
+            </div>
+
+            <div style={{ background: 'var(--gold-soft)', border: '1px solid rgba(201,162,77,0.2)', borderRadius: 8, padding: '9px 13px', marginBottom: 4 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--gold)', letterSpacing: '0.3px' }}>
+                {[proj.inspector1, proj.inspector2].filter(s => s.trim()).length === 0
+                  ? '⚑ Add at least one inspector address'
+                  : `✓ ${[proj.inspector1, proj.inspector2].filter(s => s.trim()).length} inspector${[proj.inspector1, proj.inspector2].filter(s => s.trim()).length > 1 ? 's' : ''} — all must approve for payment release`
+                }
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-sub)', borderRadius: 8, padding: '9px 18px', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>Cancel</button>
+              <button className="btn-primary" onClick={createProject}><Plus size={12} /> Create Project</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SIDE PANEL */}
+      {activeProject && (
+        <>
+          <div onClick={closePanel} style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(8,9,12,0.7)', backdropFilter: 'blur(8px)', transition: 'opacity 0.3s', opacity: isClosing ? 0 : 1 }} />
+
+          <div style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: 420, zIndex: 50, background: 'var(--surface)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', transform: isClosing ? 'translateX(100%)' : 'translateX(0)', opacity: isClosing ? 0 : 1, transition: 'transform 0.38s cubic-bezier(0.22,1,0.36,1), opacity 0.38s' }}>
+
+            {/* Header */}
+            <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--border)', background: 'var(--surface2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <div>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 4 }}>{activeProject.projectId}</p>
+                <h2 style={{ fontSize: 17, fontWeight: 500, color: 'var(--text)' }}>{activeProject.name}</h2>
+              </div>
+              <button onClick={closePanel} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface3)', border: '1px solid var(--border)', color: 'var(--text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }}>
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+              {/* Fund Progress card — now shows locked too */}
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 13, padding: 18 }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 14 }}>
+                  Fund Overview
+                </p>
+
+                {/* Three values: locked, released, budget */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div>
+                    <p style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--gold)' }}>{activeProject.locked} ETH</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 3 }}>In Vault</p>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--green)' }}>{activeProject.used} ETH</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 3 }}>Released</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--text)' }}>{activeProject.budget} ETH</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 3 }}>Budget</p>
+                  </div>
+                </div>
+
+                {/* Two stacked bars: locked vs budget, released vs locked */}
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.4px' }}>LOCKED / BUDGET</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--gold)' }}>
+                      {activeProject.budget > 0 ? Math.round((activeProject.locked / activeProject.budget) * 100) : 0}%
+                    </p>
+                  </div>
+                  <div style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 2 }}>
+                    <div style={{
+                      height: '100%', borderRadius: 2,
+                      background: 'linear-gradient(90deg, var(--gold), var(--gold2))',
+                      width: `${activeProject.budget > 0 ? Math.min(100, Math.round((activeProject.locked / activeProject.budget) * 100)) : 0}%`,
+                      transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)',
+                    }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--text-dim)', letterSpacing: '0.4px' }}>RELEASED / LOCKED</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'var(--green)' }}>
+                      {activeProject.locked > 0 ? Math.round((activeProject.used / activeProject.locked) * 100) : 0}%
+                    </p>
+                  </div>
+                  <div style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 2 }}>
+                    <div style={{
+                      height: '100%', borderRadius: 2,
+                      background: 'linear-gradient(90deg, var(--green), #6ee7b7)',
+                      width: `${activeProject.locked > 0 ? Math.min(100, Math.round((activeProject.used / activeProject.locked) * 100)) : 0}%`,
+                      transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)',
+                    }} />
+                  </div>
+                </div>
+
+                {/* Available to release */}
+                {activeProject.locked > activeProject.used && (
+                  <div style={{
+                    marginTop: 12, padding: '8px 10px',
+                    background: 'rgba(77,187,138,0.08)', border: '1px solid rgba(77,187,138,0.2)',
+                    borderRadius: 7,
+                  }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--green)', letterSpacing: '0.3px' }}>
+                      ✓ {(activeProject.locked - activeProject.used).toFixed(4)} ETH available for release
+                    </p>
+                  </div>
+                )}
+
+                {/* Warning if not enough locked */}
+                {activeProject.locked === 0 && activeProject.milestoneCount > 0 && (
+                  <div style={{
+                    marginTop: 12, padding: '8px 10px',
+                    background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)',
+                    borderRadius: 7,
+                  }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--red)', letterSpacing: '0.3px' }}>
+                      ⚑ No funds locked — lock ETH before releasing milestones
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Meta chips */}
+              <div style={{ display: 'flex', gap: 10 }}>
+                {[
+                  { label: 'Status',     val: activeProject.statusLabel },
+                  { label: 'Milestones', val: `${activeProject.paidMilestones} / ${activeProject.milestoneCount} paid` },
+                  { label: 'Approvals',  val: `${activeProject.requiredApprovals} of ${activeProject.inspectors.length}` },
+                ].map(({ label, val }) => (
+                  <div key={label} style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 4 }}>{label}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-sub)', fontWeight: 500 }}>{val}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Contractor */}
+              <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 13px' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 5 }}>Contractor</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-sub)', letterSpacing: '0.3px', wordBreak: 'break-all' }}>
+                  {activeProject.contractor}
+                </p>
+              </div>
+
+              {/* Inspectors */}
+              <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 13px' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 8 }}>
+                  Inspectors ({activeProject.inspectors.length})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {activeProject.inspectors.map((addr, i) => (
+                    <p key={i} style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-sub)', letterSpacing: '0.3px', wordBreak: 'break-all' }}>
+                      {i + 1}. {addr}
+                    </p>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lock Funds */}
+              <PanelAction title="Lock Funds">
+                <PanelInput placeholder="Amount in ETH  e.g. 2.5" value={amount} onChange={(e: InputEvent) => setAmount(e.target.value)} />
+                <PanelButton icon={<Lock size={13} />} onClick={lockFunds}>Lock to Vault</PanelButton>
+              </PanelAction>
+
+              {/* New Milestone */}
+              <PanelAction title={`New Milestone · ${activeProject.milestoneCount} existing`}>
+                <PanelInput placeholder="Milestone description..." value={milestone.description} onChange={(e: InputEvent) => setMilestone({ ...milestone, description: e.target.value })} />
+                <PanelInput placeholder="ETH amount..." value={milestone.amount} onChange={(e: InputEvent) => setMilestone({ ...milestone, amount: e.target.value })} />
+                <PanelButton icon={<Flag size={13} />} onClick={createMilestone}>Create Milestone</PanelButton>
+              </PanelAction>
+
+              {/* Release Payment */}
+              <PanelAction title={`Release Payment · ${activeProject.paidMilestones} paid`}>
+                <PanelInput placeholder={`Milestone ID  (1 – ${activeProject.milestoneCount || '?'})`} value={releaseId} onChange={(e: InputEvent) => setReleaseId(e.target.value)} />
+                <PanelButton icon={<Send size={13} />} onClick={releasePayment} primary>Release Payment</PanelButton>
+              </PanelAction>
+
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+/* ─── SUB-COMPONENTS ─── */
+
+function StatCard({ label, value, hint, hintType, fill }: { label: string; value: string; hint: string; hintType: 'up' | 'warn'; fill: number }) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 22px', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'default' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+    >
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.9px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>{label}</p>
+      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 28, color: 'var(--text)', letterSpacing: '-0.4px', lineHeight: 1 }}>{value}</p>
+      <p style={{ fontSize: 10, marginTop: 7, color: hintType === 'up' ? 'var(--green)' : 'var(--amber)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2px' }}>{hint}</p>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--border)' }}>
+        <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, fill))}%`, background: 'linear-gradient(90deg, var(--gold), var(--gold2))', borderRadius: 1, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+      </div>
+    </div>
+  )
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 22, animation: 'skeletonPulse 1.6s ease-in-out infinite' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <div style={{ width: 160, height: 14, background: 'var(--border2)', borderRadius: 4, marginBottom: 8 }} />
+          <div style={{ width: 80, height: 9, background: 'var(--border)', borderRadius: 3 }} />
+        </div>
+        <div style={{ width: 72, height: 22, background: 'var(--border)', borderRadius: 4 }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 9 }}>
+        <div style={{ width: 50, height: 9, background: 'var(--border)', borderRadius: 3 }} />
+        <div style={{ width: 80, height: 9, background: 'var(--border)', borderRadius: 3 }} />
+      </div>
+      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2 }} />
+    </div>
+  )
+}
+
+function ProjectCard({ project, isActive, onClick }: { project: Project; isActive: boolean; onClick: () => void }) {
+  const pct  = project.budget > 0 ? Math.round((project.used / project.budget) * 100) : 0
+  const meta = STATUS_META[project.status]
+  return (
+    <div onClick={onClick} style={{ background: isActive ? 'var(--surface2)' : 'var(--surface)', border: `1px solid ${isActive ? 'rgba(201,162,77,0.5)' : 'var(--border)'}`, borderRadius: 16, padding: 22, cursor: 'pointer', position: 'relative', overflow: 'hidden', boxShadow: isActive ? '0 0 0 1px rgba(201,162,77,0.12)' : 'none', transition: 'all 0.3s cubic-bezier(0.22,1,0.36,1)' }}
+      onMouseEnter={e => { if (!isActive) { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(201,162,77,0.35)'; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 16px 36px rgba(0,0,0,0.4)' } }}
+      onMouseLeave={e => { if (!isActive) { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--border)'; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none' } }}
+    >
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: isActive ? 'linear-gradient(90deg, transparent, var(--gold), transparent)' : 'linear-gradient(90deg, transparent, var(--border2), transparent)' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div>
+          <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.1px' }}>{project.name}</p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 3, letterSpacing: '0.3px' }}>{project.projectId}</p>
+        </div>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', padding: '4px 8px', borderRadius: 4, whiteSpace: 'nowrap', background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}>
+          {meta.label}
+        </span>
+      </div>
+
+      {/* Budget row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>Budget</p>
+        <p style={{ fontSize: 12, color: 'var(--text-sub)' }}><strong style={{ color: 'var(--text)', fontWeight: 500 }}>{project.used}</strong> / {project.budget} ETH</p>
+      </div>
+
+      {/* Vault locked row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>Vault</p>
+        <p style={{ fontSize: 12, color: project.locked > 0 ? 'var(--gold)' : 'var(--text-dim)' }}>
+          {project.locked > 0 ? `${project.locked} ETH locked` : 'No funds locked'}
+        </p>
+      </div>
+
+      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2 }}>
+        <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg, var(--gold), var(--gold2))', width: `${pct}%`, position: 'relative', transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }}>
+          {pct > 0 && pct < 100 && <span style={{ position: 'absolute', right: -1, top: -2, width: 7, height: 7, borderRadius: '50%', background: 'var(--gold2)', boxShadow: '0 0 5px rgba(228,191,116,0.5)', display: 'block' }} />}
+        </div>
+      </div>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 9, letterSpacing: '0.3px' }}>
+        {project.milestoneCount === 0 ? 'No milestones yet' : `${project.paidMilestones} of ${project.milestoneCount} milestone${project.milestoneCount !== 1 ? 's' : ''} paid`}
+      </p>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 7 }}>{label}</p>
       {children}
+    </div>
+  )
+}
+
+function Input({ placeholder, value, onChange, type }: { placeholder?: string; value: string; onChange: (e: InputEvent) => void; type?: string }) {
+  return (
+    <input type={type || 'text'} value={value} onChange={onChange} placeholder={placeholder}
+      style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 13px', color: 'var(--text)', fontFamily: 'var(--font-sans)', fontSize: 13, outline: 'none' }}
+      onFocus={e => { e.target.style.borderColor = 'rgba(201,162,77,0.4)'; e.target.style.boxShadow = '0 0 0 3px rgba(201,162,77,0.08)' }}
+      onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
+    />
+  )
+}
+
+function PanelInput({ placeholder, value, onChange }: { placeholder?: string; value: string; onChange: (e: InputEvent) => void }) {
+  return (
+    <input value={value} onChange={onChange} placeholder={placeholder}
+      style={{ width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 13px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', letterSpacing: '0.3px', marginBottom: 9 }}
+      onFocus={e => { e.target.style.borderColor = 'rgba(201,162,77,0.35)' }}
+      onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
+    />
+  )
+}
+
+function PanelButton({ children, icon, onClick, primary }: { children: React.ReactNode; icon?: React.ReactNode; onClick: () => void; primary?: boolean }) {
+  return (
+    <button onClick={onClick}
+      style={{ width: '100%', background: primary ? 'var(--gold)' : 'var(--surface2)', border: `1px solid ${primary ? 'var(--gold)' : 'var(--border)'}`, color: primary ? '#0d0f14' : 'var(--text-sub)', borderRadius: 8, padding: 10, fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: primary ? 4 : 0, transition: 'all 0.2s' }}
+      onMouseEnter={e => { const el = e.currentTarget; primary ? (el.style.background = 'var(--gold2)', el.style.boxShadow = '0 5px 18px rgba(201,162,77,0.25)') : (el.style.borderColor = 'rgba(201,162,77,0.3)', el.style.color = 'var(--gold)', el.style.background = 'var(--gold-soft)') }}
+      onMouseLeave={e => { const el = e.currentTarget; primary ? (el.style.background = 'var(--gold)', el.style.boxShadow = 'none') : (el.style.borderColor = 'var(--border)', el.style.color = 'var(--text-sub)', el.style.background = 'var(--surface2)') }}
+    >
+      {icon} {children}
     </button>
   )
 }
 
-/* ── Main component ────────────────────────── */
-
-export function GovPanel({ contracts }: { contracts: Contracts | null }) {
-  const [proj, setProj] = useState({
-    name: '', budget: '', contractor: '',
-    inspector1: '', inspector2: '', required: '2',
-  })
-  const [lock, setLock]   = useState({ projectId: '', amount: '' })
-  const [ms, setMs]       = useState({ projectId: '', description: '', amount: '' })
-  const [rel, setRel]     = useState({ projectId: '', milestoneId: '' })
-  const [loading, setLoading] = useState<string | null>(null)
-
-  const createProject = async () => {
-    if (!contracts) return toast.error('Connect wallet first')
-    setLoading('project')
-    try {
-      const tx = await contracts.registry.createProject(
-        proj.name,
-        ethers.utils.parseEther(proj.budget || '0'),
-        proj.contractor.trim(),
-        [proj.inspector1.trim(), proj.inspector2.trim()],
-        parseInt(proj.required || '2'),
-      )
-      const receipt = await tx.wait()
-      const event   = receipt.events?.find((e: any) => e.event === 'ProjectCreated')
-      const id      = event?.args?.projectId?.toString() ?? '?'
-      toast.success(`Project #${id} created!`, { description: receipt.transactionHash.slice(0, 20) + '…' })
-      setProj({ name: '', budget: '', contractor: '', inspector1: '', inspector2: '', required: '2' })
-    } catch (e: any) {
-      toast.error(e?.reason ?? e?.message ?? 'Transaction failed')
-    } finally { setLoading(null) }
-  }
-
-  const lockFunds = async () => {
-    if (!contracts) return toast.error('Connect wallet first')
-    setLoading('lock')
-    try {
-      const tx = await contracts.vault.lockFunds(parseInt(lock.projectId), {
-        value: ethers.utils.parseEther(lock.amount || '0'),
-      })
-      await tx.wait()
-      toast.success(`Locked ${lock.amount} ETH for Project #${lock.projectId}`)
-      setLock({ projectId: '', amount: '' })
-    } catch (e: any) {
-      toast.error(e?.reason ?? e?.message ?? 'Failed')
-    } finally { setLoading(null) }
-  }
-
-  const createMilestone = async () => {
-    if (!contracts) return toast.error('Connect wallet first')
-    setLoading('milestone')
-    try {
-      const tx = await contracts.milestone.createMilestone(
-        parseInt(ms.projectId),
-        ms.description,
-        ethers.utils.parseEther(ms.amount || '0'),
-      )
-      await tx.wait()
-      toast.success(`Milestone created for Project #${ms.projectId}`)
-      setMs({ projectId: '', description: '', amount: '' })
-    } catch (e: any) {
-      toast.error(e?.reason ?? e?.message ?? 'Failed')
-    } finally { setLoading(null) }
-  }
-
-  const releasePayment = async () => {
-    if (!contracts) return toast.error('Connect wallet first')
-    setLoading('release')
-    try {
-      const tx = await contracts.vault.release(parseInt(rel.projectId), parseInt(rel.milestoneId))
-      await tx.wait()
-      toast.success('Payment released to contractor!')
-      setRel({ projectId: '', milestoneId: '' })
-    } catch (e: any) {
-      toast.error(e?.reason ?? 'Check if milestone is APPROVED')
-    } finally { setLoading(null) }
-  }
-
+function PanelAction({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <SectionHeader
-        title="Government Panel"
-        desc="Create and fund infrastructure projects, define milestones, and release approved payments."
-      />
-
-      {/* ── Row 1: Create Project (full width) ── */}
-      <Card title="Create Project" desc="Register a new procurement project and assign roles on-chain">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 24px' }}>
-          <Field
-            label="Project Name"
-            placeholder="NH-48 Road Widening Phase 1"
-            value={proj.name}
-            onChange={e => setProj({ ...proj, name: e.target.value })}
-          />
-          <Field
-            label="Total Budget (ETH)"
-            type="number"
-            placeholder="1.0"
-            value={proj.budget}
-            onChange={e => setProj({ ...proj, budget: e.target.value })}
-          />
-          <Field
-            label="Contractor Wallet Address"
-            placeholder="0x…"
-            value={proj.contractor}
-            onChange={e => setProj({ ...proj, contractor: e.target.value })}
-          />
-          <Field
-            label="Required Approvals (M-of-N)"
-            type="number"
-            placeholder="2"
-            value={proj.required}
-            onChange={e => setProj({ ...proj, required: e.target.value })}
-          />
-          <Field
-            label="Inspector A Wallet"
-            placeholder="0x…"
-            value={proj.inspector1}
-            onChange={e => setProj({ ...proj, inspector1: e.target.value })}
-          />
-          <Field
-            label="Inspector B Wallet"
-            placeholder="0x…"
-            value={proj.inspector2}
-            onChange={e => setProj({ ...proj, inspector2: e.target.value })}
-          />
-        </div>
-        <Btn loading={loading === 'project'} icon={Plus} onClick={createProject}>
-          Create Project
-        </Btn>
-      </Card>
-
-      {/* ── Row 2: Lock Funds + Create Milestone ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        <Card title="Lock Funds" desc="Deposit ETH into the payment vault escrow">
-          <Field
-            label="Project ID"
-            type="number"
-            placeholder="1"
-            value={lock.projectId}
-            onChange={e => setLock({ ...lock, projectId: e.target.value })}
-          />
-          <Field
-            label="Amount (ETH)"
-            type="number"
-            placeholder="1.0"
-            value={lock.amount}
-            onChange={e => setLock({ ...lock, amount: e.target.value })}
-          />
-          <Btn loading={loading === 'lock'} icon={Lock} onClick={lockFunds}>
-            Lock Funds
-          </Btn>
-        </Card>
-
-        <Card title="Create Milestone" desc="Define a payable milestone with an allocated budget">
-          <Field
-            label="Project ID"
-            type="number"
-            placeholder="1"
-            value={ms.projectId}
-            onChange={e => setMs({ ...ms, projectId: e.target.value })}
-          />
-          <Field
-            label="Description"
-            placeholder="Foundation and earthwork complete"
-            value={ms.description}
-            onChange={e => setMs({ ...ms, description: e.target.value })}
-          />
-          <Field
-            label="Milestone Budget (ETH)"
-            type="number"
-            placeholder="0.5"
-            value={ms.amount}
-            onChange={e => setMs({ ...ms, amount: e.target.value })}
-          />
-          <Btn loading={loading === 'milestone'} icon={Flag} onClick={createMilestone}>
-            Create Milestone
-          </Btn>
-        </Card>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 11 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', flexShrink: 0 }}>{title}</p>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
-
-      {/* ── Row 3: Release Payment ── */}
-      <Card
-        title="Release Payment"
-        desc="Trigger payment release for an approved milestone — contract enforces conditions"
-        accent
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 24px' }}>
-          <Field
-            label="Project ID"
-            type="number"
-            placeholder="1"
-            value={rel.projectId}
-            onChange={e => setRel({ ...rel, projectId: e.target.value })}
-          />
-          <Field
-            label="Milestone ID"
-            type="number"
-            placeholder="1"
-            value={rel.milestoneId}
-            onChange={e => setRel({ ...rel, milestoneId: e.target.value })}
-          />
-        </div>
-        <Btn loading={loading === 'release'} icon={Send} onClick={releasePayment}>
-          Release Payment
-        </Btn>
-      </Card>
+      {children}
     </div>
   )
 }
