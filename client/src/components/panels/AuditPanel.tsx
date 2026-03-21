@@ -1,238 +1,86 @@
-// import { useState, useCallback } from 'react'
-// import { RefreshCw, ExternalLink } from 'lucide-react'
-// import { toast } from 'sonner'
-// import { cn } from '@/lib/utils'
-// import type { Contracts } from '@/lib/contracts'
-// import type { ethers } from 'ethers'
-
-// type LogEntry = {
-//     event: string
-//     block: number
-//     args: Record<string, string>
-//     tx: string
-// }
-
-// const EVENT_BADGE: Record<string, string> = {
-//     ProjectCreated: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-//     FundsLocked: 'bg-amber-50 text-amber-700 border-amber-100',
-//     MilestoneCreated: 'bg-sky-50 text-sky-700 border-sky-100',
-//     ClaimSubmitted: 'bg-orange-50 text-orange-700 border-orange-100',
-//     InspectorApproved: 'bg-violet-50 text-violet-700 border-violet-100',
-//     MilestoneApproved: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-//     PaymentReleased: 'bg-green-50 text-green-700 border-green-100',
-//     InvoiceLogged: 'bg-pink-50 text-pink-700 border-pink-100',
-// }
-
-// function formatArgs(event: string, args: any): Record<string, string> {
-//     try {
-//         switch (event) {
-//             case 'ProjectCreated':
-//                 return { 'Project #': args.projectId?.toString(), Name: args.name, Budget: args.budget?.toString() + ' wei' }
-//             case 'FundsLocked':
-//                 return { 'Project #': args.projectId?.toString(), Amount: args.amount?.toString() + ' wei' }
-//             case 'MilestoneCreated':
-//                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString(), Amount: args.amount?.toString() + ' wei' }
-//             case 'ClaimSubmitted':
-//                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString() }
-//             case 'InspectorApproved':
-//                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString(), Inspector: args.inspector?.slice(0, 10) + '…' }
-//             case 'MilestoneApproved':
-//                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString() }
-//             case 'PaymentReleased':
-//                 return { 'Project #': args.projectId?.toString(), 'Milestone #': args.milestoneId?.toString(), Amount: args.amount?.toString() + ' wei' }
-//             default:
-//                 return {}
-//         }
-//     } catch { return {} }
-// }
-
-// export function AuditPanel({ contracts, provider }: { contracts: Contracts | null; provider: ethers.providers.Web3Provider | null }) {
-//     const [logs, setLogs] = useState<LogEntry[]>([])
-//     const [loading, setLoading] = useState(false)
-
-//     const fetchEvents = useCallback(async () => {
-//         if (!contracts || !provider) return toast.error('Connect wallet first')
-//         setLoading(true)
-//         try {
-//             const [
-//                 projCreated, fundsLocked, msCreated, claimSub, inspApproved, msApproved, pmtReleased, invLogged,
-//             ] = await Promise.all([
-//                 contracts.registry.queryFilter(contracts.registry.filters.ProjectCreated(), 0, 'latest'),
-//                 contracts.vault.queryFilter(contracts.vault.filters.FundsLocked(), 0, 'latest'),
-//                 contracts.milestone.queryFilter(contracts.milestone.filters.MilestoneCreated(), 0, 'latest'),
-//                 contracts.milestone.queryFilter(contracts.milestone.filters.ClaimSubmitted(), 0, 'latest'),
-//                 contracts.milestone.queryFilter(contracts.milestone.filters.InspectorApproved(), 0, 'latest'),
-//                 contracts.milestone.queryFilter(contracts.milestone.filters.MilestoneApproved(), 0, 'latest'),
-//                 contracts.vault.queryFilter(contracts.vault.filters.PaymentReleased(), 0, 'latest'),
-//                 contracts.vault.queryFilter(contracts.vault.filters.InvoiceLogged(), 0, 'latest'),
-//             ])
-
-//             const all = [
-//                 ...projCreated.map(e => ({ event: 'ProjectCreated', block: e.blockNumber, args: formatArgs('ProjectCreated', e.args), tx: e.transactionHash })),
-//                 ...fundsLocked.map(e => ({ event: 'FundsLocked', block: e.blockNumber, args: formatArgs('FundsLocked', e.args), tx: e.transactionHash })),
-//                 ...msCreated.map(e => ({ event: 'MilestoneCreated', block: e.blockNumber, args: formatArgs('MilestoneCreated', e.args), tx: e.transactionHash })),
-//                 ...claimSub.map(e => ({ event: 'ClaimSubmitted', block: e.blockNumber, args: formatArgs('ClaimSubmitted', e.args), tx: e.transactionHash })),
-//                 ...inspApproved.map(e => ({ event: 'InspectorApproved', block: e.blockNumber, args: formatArgs('InspectorApproved', e.args), tx: e.transactionHash })),
-//                 ...msApproved.map(e => ({ event: 'MilestoneApproved', block: e.blockNumber, args: formatArgs('MilestoneApproved', e.args), tx: e.transactionHash })),
-//                 ...pmtReleased.map(e => ({ event: 'PaymentReleased', block: e.blockNumber, args: formatArgs('PaymentReleased', e.args), tx: e.transactionHash })),
-//                 ...invLogged.map(e => ({ event: 'InvoiceLogged', block: e.blockNumber, args: formatArgs('InvoiceLogged', e.args), tx: e.transactionHash })),
-//             ].sort((a, b) => b.block - a.block)
-
-//             setLogs(all)
-//             toast.success(`Loaded ${all.length} on-chain events`)
-//         } catch (e: any) {
-//             toast.error(e?.message ?? 'Failed to fetch events')
-//         } finally { setLoading(false) }
-//     }, [contracts, provider])
-
-//     return (
-//         <div className="space-y-4">
-//             <div className="flex items-center justify-between">
-//                 <div>
-//                     <h2 className="text-lg font-semibold text-zinc-900">Audit Log</h2>
-//                     <p className="text-sm text-zinc-500 mt-0.5">Complete on-chain event history — immutable and publicly verifiable.</p>
-//                 </div>
-//                 <button
-//                     onClick={fetchEvents}
-//                     disabled={loading}
-//                     className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
-//                 >
-//                     <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-//                     {loading ? 'Loading…' : 'Fetch Events'}
-//                 </button>
-//             </div>
-
-//             <div className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-//                 {logs.length === 0 ? (
-//                     <div className="flex flex-col items-center justify-center py-20 text-center">
-//                         <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
-//                             <RefreshCw className="h-5 w-5 text-zinc-400" />
-//                         </div>
-//                         <p className="text-sm font-medium text-zinc-600">No events loaded yet</p>
-//                         <p className="text-xs text-zinc-400 mt-1">Click "Fetch Events" to load the full on-chain history</p>
-//                     </div>
-//                 ) : (
-//                     <table className="w-full text-sm">
-//                         <thead>
-//                             <tr className="border-b border-zinc-100 bg-zinc-50/60">
-//                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Block</th>
-//                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Event</th>
-//                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Details</th>
-//                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Tx Hash</th>
-//                             </tr>
-//                         </thead>
-//                         <tbody className="divide-y divide-zinc-100">
-//                             {logs.map((log, i) => (
-//                                 <tr key={i} className="hover:bg-zinc-50/50 transition-colors">
-//                                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">#{log.block}</td>
-//                                     <td className="px-4 py-3">
-//                                         <span className={cn(
-//                                             'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium',
-//                                             EVENT_BADGE[log.event] ?? 'bg-zinc-50 text-zinc-600 border-zinc-100'
-//                                         )}>
-//                                             {log.event}
-//                                         </span>
-//                                     </td>
-//                                     <td className="px-4 py-3">
-//                                         <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-//                                             {Object.entries(log.args).map(([k, v]) => (
-//                                                 <span key={k} className="text-xs text-zinc-600">
-//                                                     <span className="text-zinc-400">{k}: </span>{v}
-//                                                 </span>
-//                                             ))}
-//                                         </div>
-//                                     </td>
-//                                     <td className="px-4 py-3 font-mono text-xs text-zinc-400">
-//                                         {log.tx.slice(0, 10)}…{log.tx.slice(-6)}
-//                                     </td>
-//                                 </tr>
-//                             ))}
-//                         </tbody>
-//                     </table>
-//                 )}
-//             </div>
-//         </div>
-//     )
-// }
-import { useState, useCallback } from 'react'
-import { RefreshCw, ExternalLink, ArrowUpRight } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { ethers } from 'ethers'
+import { RefreshCw, AlertCircle, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Contracts } from '@/lib/contracts'
-import type { ethers } from 'ethers'
+
+/* ─── TYPES ─── */
 
 type LogEntry = {
-  event: string
-  block: number
-  args: Record<string, string>
-  tx: string
+  event:  string
+  block:  number
+  ts:     string   // formatted time — block number as proxy
+  args:   Record<string, string>
+  tx:     string
+  raw:    any
 }
 
-/* Event color config */
-const EVENT_STYLE: Record<string, { bg: string; color: string; border: string; dot: string }> = {
-  ProjectCreated:   { bg: '#eef2ff', color: '#4338ca', border: '#c7d2fe', dot: '#4338ca' },
-  FundsLocked:      { bg: '#fffbeb', color: '#b45309', border: '#fde68a', dot: '#d97706' },
-  MilestoneCreated: { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd', dot: '#0ea5e9' },
-  ClaimSubmitted:   { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa', dot: '#f97316' },
-  InspectorApproved:{ bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe', dot: '#7c3aed' },
-  MilestoneApproved:{ bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', dot: '#16a34a' },
-  PaymentReleased:  { bg: '#dcfce7', color: '#166534', border: '#86efac', dot: '#16a34a' },
-  InvoiceLogged:    { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff', dot: '#a21caf' },
+type FilterKey = 'all' | string
+
+/* ─── EVENT CONFIG ─── */
+
+const EVENT_CONFIG: Record<string, {
+  color: string; bg: string; border: string
+  icon: React.ReactNode
+  label: string
+}> = {
+  ProjectCreated:    { color: 'var(--gold)',    bg: 'rgba(201,162,77,0.15)',   border: 'rgba(201,162,77,0.25)',   label: 'ProjectCreated',    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg> },
+  FundsLocked:       { color: 'var(--amber)',   bg: 'rgba(224,154,48,0.15)',   border: 'rgba(224,154,48,0.25)',   label: 'FundsLocked',       icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2.5" y="6" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg> },
+  MilestoneCreated:  { color: 'var(--blue)',    bg: 'rgba(74,158,255,0.15)',   border: 'rgba(74,158,255,0.25)',   label: 'MilestoneCreated',  icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+  ClaimSubmitted:    { color: 'var(--red)',     bg: 'rgba(224,82,82,0.15)',    border: 'rgba(224,82,82,0.25)',    label: 'ClaimSubmitted',    icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5h10M7 2.5v6M4 5.5l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  InspectorApproved: { color: '#9b7fe8',        bg: 'rgba(155,127,232,0.15)',  border: 'rgba(155,127,232,0.25)', label: 'InspectorApproved', icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="4" stroke="currentColor" strokeWidth="1.4"/><path d="M5 7l1.5 1.5L9 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  MilestoneApproved: { color: 'var(--green)',   bg: 'rgba(77,187,138,0.15)',   border: 'rgba(77,187,138,0.25)',   label: 'MilestoneApproved', icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10l-3 1.5.5-3.5L2 5.5 5.5 5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg> },
+  PaymentReleased:   { color: 'var(--green)',   bg: 'rgba(77,187,138,0.2)',    border: 'rgba(77,187,138,0.35)',   label: 'PaymentReleased',   icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3 3 7-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  InvoiceLogged:     { color: '#c084fc',        bg: 'rgba(192,132,252,0.15)',  border: 'rgba(192,132,252,0.25)', label: 'InvoiceLogged',     icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 2h8a1 1 0 011 1v9l-2-1.5L8 12l-2-1.5L4 12l-2 1.5V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg> },
+}
+
+/* ─── ARG FORMATTING ─── */
+
+function fmtWei(val: any): string {
+  try { return parseFloat(ethers.utils.formatEther(val)).toFixed(4) + ' ETH' }
+  catch { return String(val) }
+}
+
+function fmtAddr(addr: string): string {
+  return `${addr.slice(0, 8)}…${addr.slice(-6)}`
 }
 
 function formatArgs(event: string, args: any): Record<string, string> {
   try {
     switch (event) {
       case 'ProjectCreated':
-        return { 'Project': `#${args.projectId}`, 'Name': args.name, 'Budget': `${args.budget} wei` }
+        return { 'id': `#${args.projectId}`, 'name': args.name, 'budget': fmtWei(args.budget) }
       case 'FundsLocked':
-        return { 'Project': `#${args.projectId}`, 'Amount': `${args.amount} wei` }
+        return { 'project': `#${args.projectId}`, 'amount': fmtWei(args.amount) }
       case 'MilestoneCreated':
-        return { 'Project': `#${args.projectId}`, 'Milestone': `#${args.milestoneId}`, 'Amount': `${args.amount} wei` }
+        return { 'project': `#${args.projectId}`, 'milestone': `#${args.milestoneId}`, 'amount': fmtWei(args.amount) }
       case 'ClaimSubmitted':
-        return { 'Project': `#${args.projectId}`, 'Milestone': `#${args.milestoneId}` }
+        return { 'project': `#${args.projectId}`, 'milestone': `#${args.milestoneId}`, 'evidence': `${String(args.evidenceHash).slice(0, 10)}…` }
       case 'InspectorApproved':
-        return { 'Project': `#${args.projectId}`, 'Milestone': `#${args.milestoneId}`, 'Inspector': `${args.inspector?.slice(0, 8)}…` }
+        return { 'project': `#${args.projectId}`, 'milestone': `#${args.milestoneId}`, 'inspector': fmtAddr(args.inspector) }
       case 'MilestoneApproved':
-        return { 'Project': `#${args.projectId}`, 'Milestone': `#${args.milestoneId}` }
+        return { 'project': `#${args.projectId}`, 'milestone': `#${args.milestoneId}` }
       case 'PaymentReleased':
-        return { 'Project': `#${args.projectId}`, 'Milestone': `#${args.milestoneId}`, 'Amount': `${args.amount} wei`, 'To': `${args.contractor?.slice(0, 8)}…` }
+        return { 'project': `#${args.projectId}`, 'milestone': `#${args.milestoneId}`, 'amount': fmtWei(args.amount), 'to': fmtAddr(args.contractor) }
       case 'InvoiceLogged':
-        return { 'Project': `#${args.projectId}`, 'Supplier': `${args.supplier?.slice(0, 8)}…` }
+        return { 'project': `#${args.projectId}`, 'supplier': fmtAddr(args.supplier) }
       default:
         return {}
     }
   } catch { return {} }
 }
 
-function EventPill({ event }: { event: string }) {
-  const style = EVENT_STYLE[event] ?? {
-    bg: 'var(--surface-2)', color: 'var(--text-secondary)',
-    border: 'var(--border-default)', dot: 'var(--text-tertiary)',
-  }
-  return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      background: style.bg,
-      color: style.color,
-      border: `1px solid ${style.border}`,
-      borderRadius: 99,
-      padding: '3px 10px',
-      fontSize: 11,
-      fontWeight: 600,
-      whiteSpace: 'nowrap',
-    }}>
-      <span style={{
-        width: 5, height: 5,
-        borderRadius: '50%',
-        background: style.dot,
-        flexShrink: 0,
-      }} />
-      {event}
-    </span>
-  )
+/* ─── ARG VALUE COLOR ─── */
+
+function argValColor(key: string, val: string): string {
+  if (key === 'amount' || key === 'budget') return 'var(--gold)'
+  if (key === 'to' || key === 'contractor' || key === 'inspector') return 'var(--blue)'
+  if (key === 'name') return 'var(--text)'
+  if (key === 'id' || key === 'project' || key === 'milestone') return 'var(--text-sub)'
+  return 'var(--text-sub)'
 }
+
+/* ─── COMPONENT ─── */
 
 export function AuditPanel({
   contracts,
@@ -241,239 +89,306 @@ export function AuditPanel({
   contracts: Contracts | null
   provider: ethers.providers.Web3Provider | null
 }) {
-  const [logs, setLogs]     = useState<LogEntry[]>([])
+  const [logs, setLogs]       = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(false)
+  const [filter, setFilter]   = useState<FilterKey>('all')
+  const [error, setError]     = useState<string | null>(null)
+
+    
+
+  /* ─── FETCH ─── */
 
   const fetchEvents = useCallback(async () => {
     if (!contracts || !provider) return toast.error('Connect wallet first')
     setLoading(true)
+    setError(null)
     try {
       const [
         projCreated, fundsLocked, msCreated, claimSub,
         inspApproved, msApproved, pmtReleased, invLogged,
       ] = await Promise.all([
-        contracts.registry.queryFilter(contracts.registry.filters.ProjectCreated(), 0, 'latest'),
-        contracts.vault.queryFilter(contracts.vault.filters.FundsLocked(), 0, 'latest'),
+        contracts.registry.queryFilter(contracts.registry.filters.ProjectCreated(),    0, 'latest'),
+        contracts.vault.queryFilter(contracts.vault.filters.FundsLocked(),             0, 'latest'),
         contracts.milestone.queryFilter(contracts.milestone.filters.MilestoneCreated(), 0, 'latest'),
-        contracts.milestone.queryFilter(contracts.milestone.filters.ClaimSubmitted(), 0, 'latest'),
+        contracts.milestone.queryFilter(contracts.milestone.filters.ClaimSubmitted(),  0, 'latest'),
         contracts.milestone.queryFilter(contracts.milestone.filters.InspectorApproved(), 0, 'latest'),
         contracts.milestone.queryFilter(contracts.milestone.filters.MilestoneApproved(), 0, 'latest'),
-        contracts.vault.queryFilter(contracts.vault.filters.PaymentReleased(), 0, 'latest'),
-        contracts.vault.queryFilter(contracts.vault.filters.InvoiceLogged(), 0, 'latest'),
+        contracts.vault.queryFilter(contracts.vault.filters.PaymentReleased(),         0, 'latest'),
+        contracts.vault.queryFilter(contracts.vault.filters.InvoiceLogged(),           0, 'latest'),
       ])
 
       const all: LogEntry[] = [
-        ...projCreated.map(e   => ({ event: 'ProjectCreated',    block: e.blockNumber, args: formatArgs('ProjectCreated',    e.args), tx: e.transactionHash })),
-        ...fundsLocked.map(e   => ({ event: 'FundsLocked',       block: e.blockNumber, args: formatArgs('FundsLocked',       e.args), tx: e.transactionHash })),
-        ...msCreated.map(e     => ({ event: 'MilestoneCreated',  block: e.blockNumber, args: formatArgs('MilestoneCreated',  e.args), tx: e.transactionHash })),
-        ...claimSub.map(e      => ({ event: 'ClaimSubmitted',    block: e.blockNumber, args: formatArgs('ClaimSubmitted',    e.args), tx: e.transactionHash })),
-        ...inspApproved.map(e  => ({ event: 'InspectorApproved', block: e.blockNumber, args: formatArgs('InspectorApproved', e.args), tx: e.transactionHash })),
-        ...msApproved.map(e    => ({ event: 'MilestoneApproved', block: e.blockNumber, args: formatArgs('MilestoneApproved', e.args), tx: e.transactionHash })),
-        ...pmtReleased.map(e   => ({ event: 'PaymentReleased',   block: e.blockNumber, args: formatArgs('PaymentReleased',   e.args), tx: e.transactionHash })),
-        ...invLogged.map(e     => ({ event: 'InvoiceLogged',     block: e.blockNumber, args: formatArgs('InvoiceLogged',     e.args), tx: e.transactionHash })),
+        ...projCreated.map(e   => ({ event: 'ProjectCreated',    block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('ProjectCreated',    e.args), tx: e.transactionHash, raw: e })),
+        ...fundsLocked.map(e   => ({ event: 'FundsLocked',       block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('FundsLocked',       e.args), tx: e.transactionHash, raw: e })),
+        ...msCreated.map(e     => ({ event: 'MilestoneCreated',  block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('MilestoneCreated',  e.args), tx: e.transactionHash, raw: e })),
+        ...claimSub.map(e      => ({ event: 'ClaimSubmitted',    block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('ClaimSubmitted',    e.args), tx: e.transactionHash, raw: e })),
+        ...inspApproved.map(e  => ({ event: 'InspectorApproved', block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('InspectorApproved', e.args), tx: e.transactionHash, raw: e })),
+        ...msApproved.map(e    => ({ event: 'MilestoneApproved', block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('MilestoneApproved', e.args), tx: e.transactionHash, raw: e })),
+        ...pmtReleased.map(e   => ({ event: 'PaymentReleased',   block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('PaymentReleased',   e.args), tx: e.transactionHash, raw: e })),
+        ...invLogged.map(e     => ({ event: 'InvoiceLogged',     block: e.blockNumber, ts: `Block #${e.blockNumber}`, args: formatArgs('InvoiceLogged',     e.args), tx: e.transactionHash, raw: e })),
       ].sort((a, b) => b.block - a.block)
 
       setLogs(all)
-      toast.success(`${all.length} events loaded`)
+      setFilter('all')
+      toast.success(`${all.length} events loaded`, { description: 'Sorted by block descending' })
     } catch (e: any) {
-      toast.error(e?.message ?? 'Failed to fetch events')
+      setError(e?.message ?? 'Failed to fetch events')
+      toast.error('Failed to fetch events')
     } finally {
       setLoading(false)
     }
   }, [contracts, provider])
 
+  // ← ADD HERE, after fetchEvents is declared
+useEffect(() => {
+  if (contracts && provider) fetchEvents()
+}, [fetchEvents])
+
+  /* ─── DERIVED ─── */
+
+  const filtered = filter === 'all' ? logs : logs.filter(l => l.event === filter)
+  const eventTypes = [...new Set(logs.map(l => l.event))]
+
+  const stats = [
+    { label: 'Total Events',  value: logs.length,                                            sub: `· ${eventTypes.length} event types`     },
+    { label: 'Projects',      value: logs.filter(l => l.event === 'ProjectCreated').length,  sub: '· created on-chain'                     },
+    { label: 'Payments',      value: logs.filter(l => l.event === 'PaymentReleased').length, sub: '· ETH released'                         },
+    { label: 'Approvals',     value: logs.filter(l => l.event === 'InspectorApproved').length, sub: '· inspector signatures'               },
+  ]
+
+  /* ─── UI ─── */
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 44px' }}>
+
+      {/* HEADER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36 }}>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            Audit Log
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-            Complete on-chain event history — immutable, publicly verifiable, sourced directly from contract events.
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 6 }}>
+            Blockchain
+          </p>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 34, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1.1 }}>
+            Audit <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Log</em>
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 5, fontWeight: 300 }}>
+            {logs.length > 0
+              ? `${logs.length} events · immutable · publicly verifiable · sourced from contract events`
+              : 'Complete on-chain event history — immutable and publicly verifiable'
+            }
           </p>
         </div>
-
         <button
           onClick={fetchEvents}
           disabled={loading}
-          className="btn-primary"
-          style={{ flexShrink: 0, marginTop: 2 }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            background: 'var(--gold)', color: '#0d0f14', border: 'none',
+            borderRadius: 9, padding: '10px 18px',
+            fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1,
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = 'var(--gold2)'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(201,162,77,0.28)' } }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gold)'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <RefreshCw
-            size={13}
-            style={loading ? { animation: 'spin 1s linear infinite' } : undefined}
-          />
-          {loading ? 'Loading…' : 'Fetch Events'}
+          <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          {loading ? 'Loading…' : logs.length > 0 ? 'Refresh Events' : 'Fetch Events'}
         </button>
       </div>
 
-      {/* Stats row — only when logs exist */}
+      {/* ERROR */}
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 24 }}>
+          <AlertCircle size={16} color="var(--red)" />
+          <p style={{ fontSize: 13, color: 'var(--red)', flex: 1 }}>{error}</p>
+          <button onClick={fetchEvents} style={{ fontSize: 12, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Retry</button>
+        </div>
+      )}
+
+      {/* STATS */}
       {logs.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-          {[
-            { label: 'Total events',  value: logs.length },
-            { label: 'Projects',      value: logs.filter(l => l.event === 'ProjectCreated').length },
-            { label: 'Payments',      value: logs.filter(l => l.event === 'PaymentReleased').length },
-            { label: 'Approvals',     value: logs.filter(l => l.event === 'InspectorApproved').length },
-          ].map(({ label, value }) => (
-            <div key={label} style={{
-              background: 'var(--surface-0)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 12,
-              padding: '16px 20px',
-            }}>
-              <p style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {label}
-              </p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
-                {value}
-              </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+          {stats.map(({ label, value, sub }) => (
+            <div key={label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+            >
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 10 }}>{label}</p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 26, color: 'var(--text)', letterSpacing: '-0.3px', lineHeight: 1 }}>{value}</p>
+              <p style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 6, fontFamily: 'var(--font-mono)' }}>{sub}</p>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--border)' }}>
+                <div style={{ height: '100%', width: logs.length > 0 ? `${Math.min(100, (value / logs.length) * 100)}%` : '0%', background: 'linear-gradient(90deg, var(--gold), var(--gold2))', borderRadius: 1, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Table */}
-      <div style={{
-        background: 'var(--surface-0)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 14,
-        overflow: 'hidden',
-      }}>
-        {logs.length === 0 ? (
-          /* Empty state */
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '80px 40px',
-            textAlign: 'center',
-            gap: 12,
-          }}>
-            <div style={{
-              width: 48, height: 48,
-              borderRadius: '50%',
-              background: 'var(--surface-2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <RefreshCw size={20} color="var(--text-tertiary)" />
-            </div>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                No events loaded
-              </p>
-              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                Click "Fetch Events" to load the complete on-chain history
-              </p>
-            </div>
+      {/* FILTER BAR */}
+      {logs.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginRight: 4, flexShrink: 0 }}>
+            Filter
+          </p>
+          {(['all', ...eventTypes] as FilterKey[]).map(f => {
+            const isActive = filter === f
+            const cfg = f !== 'all' ? EVENT_CONFIG[f] : null
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.4px',
+                  padding: '5px 11px', borderRadius: 99,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                  border: `1px solid ${isActive ? (cfg?.border ?? 'rgba(201,162,77,0.3)') : 'var(--border)'}`,
+                  background: isActive ? (cfg?.bg ?? 'var(--gold-soft)') : 'transparent',
+                  color: isActive ? (cfg?.color ?? 'var(--gold)') : 'var(--text-dim)',
+                }}
+              >
+                {f === 'all' ? `All (${logs.length})` : `${f} (${logs.filter(l => l.event === f).length})`}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* EMPTY STATE */}
+      {!loading && logs.length === 0 && !error && (
+        <div style={{ border: '1px dashed var(--border)', borderRadius: 16, padding: '80px 40px', textAlign: 'center' }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--surface2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <RefreshCw size={20} color="var(--text-dim)" />
           </div>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-1)' }}>
-                {['Block', 'Event', 'Details', 'Transaction'].map(col => (
-                  <th key={col} style={{
-                    padding: '12px 20px',
-                    textAlign: 'left',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-tertiary)',
-                    whiteSpace: 'nowrap',
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 8 }}>No events loaded</p>
+          <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 24 }}>
+            Click Fetch Events to load the complete on-chain history
+          </p>
+          <button
+            onClick={fetchEvents}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--gold)', color: '#0d0f14', border: 'none', borderRadius: 9, padding: '10px 20px', fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <RefreshCw size={13} />
+            Fetch Events
+          </button>
+        </div>
+      )}
+
+      {/* LOADING SKELETONS */}
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} style={{ display: 'flex', gap: 16 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface2)', flexShrink: 0, animation: 'skeletonPulse 1.6s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
+              <div style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', animation: 'skeletonPulse 1.6s ease-in-out infinite', animationDelay: `${i * 0.1}s` }}>
+                <div style={{ width: 140, height: 12, background: 'var(--border2)', borderRadius: 4, marginBottom: 10 }} />
+                <div style={{ width: '60%', height: 9, background: 'var(--border)', borderRadius: 3 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TIMELINE */}
+      {!loading && filtered.length > 0 && (
+        <div style={{ position: 'relative' }}>
+
+          {/* Vertical line */}
+          <div style={{ position: 'absolute', left: 17, top: 18, bottom: 18, width: 1, background: 'linear-gradient(180deg, transparent, var(--border2) 8%, var(--border2) 92%, transparent)', pointerEvents: 'none' }} />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {filtered.map((log, i) => {
+              const cfg = EVENT_CONFIG[log.event] ?? { color: 'var(--text-dim)', bg: 'rgba(74,80,105,0.15)', border: 'rgba(74,80,105,0.2)', icon: null, label: log.event }
+              return (
+                <div key={i} style={{ display: 'flex', gap: 16, padding: '10px 0', position: 'relative' }}>
+
+                  {/* Timeline dot */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    background: cfg.bg, border: `2px solid var(--bg)`,
+                    outline: `1px solid ${cfg.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: cfg.color, zIndex: 1,
+                    transition: 'transform 0.2s',
                   }}>
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log, i) => (
-                <tr
-                  key={i}
-                  style={{
-                    borderBottom: i < logs.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                    transition: 'background 0.1s',
+                    {cfg.icon}
+                  </div>
+
+                  {/* Event card */}
+                  <div style={{
+                    flex: 1,
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12, padding: '14px 18px',
+                    transition: 'border-color 0.2s, transform 0.2s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-1)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {/* Block */}
-                  <td style={{ padding: '14px 20px', whiteSpace: 'nowrap' }}>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 12,
-                      color: 'var(--text-tertiary)',
-                    }}>
-                      #{log.block.toLocaleString()}
-                    </span>
-                  </td>
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = cfg.border; (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.transform = 'translateX(0)' }}
+                  >
+                    {/* Card header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
+                        letterSpacing: '0.3px', color: cfg.color,
+                        background: cfg.bg, border: `1px solid ${cfg.border}`,
+                        borderRadius: 5, padding: '3px 8px',
+                      }}>
+                        {log.event}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.3px' }}>
+                        {log.ts}
+                      </span>
+                    </div>
 
-                  {/* Event pill */}
-                  <td style={{ padding: '14px 20px', whiteSpace: 'nowrap' }}>
-                    <EventPill event={log.event} />
-                  </td>
-
-                  {/* Details */}
-                  <td style={{ padding: '14px 20px' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 20px' }}>
+                    {/* Args */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
                       {Object.entries(log.args).map(([k, v]) => (
-                        <span key={k} style={{ fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                          <span style={{ color: 'var(--text-tertiary)' }}>{k}: </span>
-                          <span style={{ fontWeight: 500 }}>{v}</span>
-                        </span>
+                        <div key={k} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 9px', display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.3px' }}>{k}</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: argValColor(k, v), fontWeight: 500 }}>{v}</span>
+                        </div>
                       ))}
                     </div>
-                  </td>
 
-                  {/* Tx hash */}
-                  <td style={{ padding: '14px 20px', whiteSpace: 'nowrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        color: 'var(--text-tertiary)',
-                      }}>
-                        {log.tx.slice(0, 8)}…{log.tx.slice(-6)}
+                    {/* Transaction hash */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.3px' }}>
+                        tx: {log.tx.slice(0, 14)}…{log.tx.slice(-8)}
                       </span>
                       <button
-                        title="View on explorer"
                         onClick={() => {
-                          const url = `https://amoy.polygonscan.com/tx/${log.tx}`
-                          window.open(url, '_blank', 'noopener,noreferrer')
+                          navigator.clipboard.writeText(log.tx)
+                          toast.success('Transaction hash copied')
                         }}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: 2,
-                          borderRadius: 4,
-                          color: 'var(--text-tertiary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          transition: 'color 0.12s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontSize: 9, transition: 'color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--gold)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
                       >
-                        <ArrowUpRight size={12} />
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M3 3V2a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1H8" stroke="currentColor" strokeWidth="1.2"/></svg>
+                        copy
+                      </button>
+                      <button
+                        onClick={() => window.open(`https://amoy.polygonscan.com/tx/${log.tx}`, '_blank', 'noopener,noreferrer')}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', fontSize: 9, transition: 'color 0.15s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+                      >
+                        <ExternalLink size={10} />
+                        explorer
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
-      {/* Footer note */}
-      {logs.length > 0 && (
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-          {logs.length} events · sorted by block descending · all data sourced directly from the blockchain
+      {/* FOOTER */}
+      {logs.length > 0 && !loading && (
+        <p style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)', marginTop: 32, letterSpacing: '0.3px' }}>
+          {filtered.length} of {logs.length} events · sorted by block descending · sourced directly from the blockchain
         </p>
       )}
     </div>
