@@ -125,8 +125,8 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
   const [showModal, setShowModal]             = useState(false)
   const [isClosing, setIsClosing]             = useState(false)
 
-  const [proj, setProj]       = useState({ name: '', budget: '', contractor: '', inspector1: '', inspector2: '' })
-  const [amount, setAmount]   = useState('')
+  const [proj, setProj]           = useState({ name: '', budget: '', contractor: '', inspector1: '', inspector2: '' })
+  const [amount, setAmount]       = useState('')
   const [milestone, setMilestone] = useState({ description: '', amount: '' })
   const [releaseId, setReleaseId] = useState('')
 
@@ -144,10 +144,10 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
 
   useEffect(() => { load() }, [load])
 
-  const totalReleased = projects.reduce((s, p) => s + p.used, 0)
-  const totalLocked   = projects.reduce((s, p) => s + p.locked, 0)
+  const totalReleased  = projects.reduce((s, p) => s + p.used, 0)
+  const totalLocked    = projects.reduce((s, p) => s + p.locked, 0)
   const totalAllocated = projects.reduce((s, p) => s + p.budget, 0)
-  const pendingCount  = projects.filter(p => p.status === 'pending' || p.status === 'review').length
+  const pendingCount   = projects.filter(p => p.status === 'pending' || p.status === 'review').length
 
   const createProject = async () => {
     if (!contracts) return toast.error('Connect wallet')
@@ -193,29 +193,36 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
     } catch (e: any) { toast.error(e?.reason ?? e?.message ?? 'Transaction failed') }
   }
 
-  const openPanel = (p: Project) => { setSelectedProject(p.id); setActiveProject(p); setIsClosing(false) }
+  const openPanel  = (p: Project) => { setSelectedProject(p.id); setActiveProject(p); setIsClosing(false) }
   const closePanel = () => {
     setIsClosing(true)
     setTimeout(() => { setActiveProject(null); setSelectedProject(null); setIsClosing(false) }, 360)
   }
+
+  const statCards = [
+    { label: 'Total Projects',  value: loading && projects.length === 0 ? '…' : String(projects.length),           unit: '',    hint: `· ${projects.filter(p => p.active).length} active`,                                                                      hintColor: 'var(--green)',  sub: 'on-chain',   accent: 'var(--gold)',  fill: 100,                                                                                    fillColor: 'var(--gold)'  },
+    { label: 'Vault Locked',    value: loading && projects.length === 0 ? '…' : totalLocked.toFixed(2),             unit: 'ETH', hint: '⬡ In escrow',                                                                                                             hintColor: 'var(--amber)',  sub: totalAllocated > 0 ? `${Math.round((totalLocked / totalAllocated) * 100)}% of budget` : '—', accent: 'var(--amber)',  fill: totalAllocated > 0 ? Math.min(100, (totalLocked / totalAllocated) * 100) : 0,           fillColor: 'var(--amber)' },
+    { label: 'Released',        value: loading && projects.length === 0 ? '…' : totalReleased.toFixed(2),           unit: 'ETH', hint: totalLocked > 0 ? `↑ ${Math.round((totalReleased / totalLocked) * 100)}% of locked` : '· no payouts yet',                 hintColor: 'var(--green)',  sub: 'disbursed',  accent: 'var(--green)', fill: totalLocked > 0 ? (totalReleased / totalLocked) * 100 : 0,                              fillColor: 'var(--green)' },
+    { label: 'Pending Review',  value: loading && projects.length === 0 ? '…' : String(pendingCount),               unit: '',    hint: pendingCount > 0 ? '⚑ Awaiting sign-off' : '✓ All clear',                                                                 hintColor: pendingCount > 0 ? 'var(--amber)' : 'var(--green)', sub: pendingCount > 0 ? 'milestones' : '', accent: 'var(--blue)', fill: projects.length > 0 ? (pendingCount / projects.length) * 100 : 0, fillColor: 'var(--blue)'  },
+  ]
 
   return (
     <>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 44px' }}>
 
         {/* HEADER */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 6 }}>Ministry of Infrastructure</p>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 34, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1.1 }}>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, letterSpacing: '-0.5px', color: 'var(--text)', lineHeight: 1.1 }}>
               Government <em style={{ fontStyle: 'italic', color: 'var(--gold)' }}>Dashboard</em>
             </h1>
-            <p style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 5, fontWeight: 300 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-sub)', marginTop: 5, fontWeight: 300 }}>
               Infrastructure fund management · {projects.length} project{projects.length !== 1 ? 's' : ''} on-chain
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={load} disabled={loading} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: loading ? 'var(--text-dim)' : 'var(--text-sub)', borderRadius: 9, padding: '10px 14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: 13, transition: 'all 0.2s' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button onClick={load} disabled={loading} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: loading ? 'var(--text-dim)' : 'var(--text-sub)', borderRadius: 8, padding: '9px 14px', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-sans)', fontSize: 13, transition: 'all 0.2s' }}>
               <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
               {loading ? 'Syncing…' : 'Refresh'}
             </button>
@@ -223,16 +230,31 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
           </div>
         </div>
 
-        {/* STATS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 13, marginBottom: 40 }}>
-          <StatCard label="Total Projects"  value={loading && projects.length === 0 ? '…' : String(projects.length)}                hint={`· ${projects.filter(p => p.active).length} active`} hintType="up" fill={100} />
-          <StatCard label="Vault Locked"    value={loading && projects.length === 0 ? '…' : `${totalLocked.toFixed(2)} ETH`}        hint="⬡ In escrow" hintType="warn" fill={totalAllocated > 0 ? Math.min(100, (totalLocked / totalAllocated) * 100) : 0} />
-          <StatCard label="Released"        value={loading && projects.length === 0 ? '…' : `${totalReleased.toFixed(2)} ETH`}      hint={totalLocked > 0 ? `↑ ${((totalReleased / totalLocked) * 100).toFixed(0)}% of locked` : '· no payouts yet'} hintType="up" fill={totalLocked > 0 ? (totalReleased / totalLocked) * 100 : 0} />
-          <StatCard label="Pending Review"  value={loading && projects.length === 0 ? '…' : String(pendingCount)}                   hint={pendingCount > 0 ? '⚑ Awaiting sign-off' : '✓ All clear'} hintType={pendingCount > 0 ? 'warn' : 'up'} fill={projects.length > 0 ? (pendingCount / projects.length) * 100 : 0} />
+        {/* STAT CARDS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 32 }}>
+          {statCards.map(({ label, value, unit, hint, hintColor, sub, accent, fill, fillColor }) => (
+            <div key={label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 22px', position: 'relative', overflow: 'hidden', transition: 'transform 0.2s', cursor: 'default' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+            >
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${accent}, transparent)` }} />
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 14 }}>{label}</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 10 }}>
+                <p style={{ fontFamily: 'var(--font-serif)', fontSize: 30, color: 'var(--text)', letterSpacing: '-0.5px', lineHeight: 1 }}>{value}</p>
+                {unit && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--text-sub)', letterSpacing: '0.2px', fontWeight: 500 }}>{unit}</p>}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ fontSize: 11, color: hintColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.2px' }}>{hint}</p>
+                {sub && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-sub)' }}>{sub}</p>}
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--border)' }}>
+                <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, fill))}%`, background: fillColor, opacity: 0.5, borderRadius: 1, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+              </div>
+            </div>
+          ))}
         </div>
 
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.9px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 16 }}>Projects</p>
-
+        {/* ERROR */}
         {error && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 20 }}>
             <AlertCircle size={16} color="var(--red)" />
@@ -241,12 +263,21 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
           </div>
         )}
 
+        {/* SECTION LABEL */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-sub)', flexShrink: 0 }}>Projects</p>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          {projects.length > 0 && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-sub)', flexShrink: 0 }}>{projects.length} total</p>}
+        </div>
+
+        {/* SKELETONS */}
         {loading && projects.length === 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {[0, 1, 2, 3].map(i => <SkeletonCard key={i} />)}
           </div>
         )}
 
+        {/* EMPTY */}
         {!loading && !error && projects.length === 0 && (
           <div style={{ border: '1px dashed var(--border)', borderRadius: 16, padding: '60px 40px', textAlign: 'center' }}>
             <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-dim)', fontStyle: 'italic', marginBottom: 8 }}>No projects yet</p>
@@ -255,8 +286,9 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
           </div>
         )}
 
+        {/* PROJECT CARDS */}
         {projects.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 13 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {projects.map(p => (
               <ProjectCard key={p.id} project={p} isActive={selectedProject === p.id} onClick={() => openPanel(p)} />
             ))}
@@ -264,7 +296,7 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* CREATE PROJECT MODAL */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(8,9,12,0.85)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
@@ -293,15 +325,14 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
         </div>
       )}
 
-      {/* ── SIDE PANEL — wider, more professional ── */}
+      {/* ── SIDE PANEL ── wide, no scroll ── */}
       {activeProject && (
         <>
           <div onClick={closePanel} style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'rgba(8,9,12,0.75)', backdropFilter: 'blur(10px)', transition: 'opacity 0.3s', opacity: isClosing ? 0 : 1 }} />
 
-          {/* Panel — increased to 560px, two-column internal layout */}
           <div style={{
             position: 'fixed', top: 0, right: 0, height: '100%',
-            width: 560,                                          // ← wider
+            width: 680,
             zIndex: 50,
             background: 'var(--surface)',
             borderLeft: '1px solid var(--border)',
@@ -309,195 +340,202 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
             transform: isClosing ? 'translateX(100%)' : 'translateX(0)',
             opacity: isClosing ? 0 : 1,
             transition: 'transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s',
-            boxShadow: '-20px 0 60px rgba(0,0,0,0.5)',           // ← depth shadow
+            boxShadow: '-24px 0 64px rgba(0,0,0,0.6)',
+            overflow: 'hidden',
           }}>
 
-            {/* Panel header — richer */}
+            {/* ── Panel header ── */}
             <div style={{
-              padding: '26px 32px',
+              padding: '24px 28px 20px',
               borderBottom: '1px solid var(--border)',
               background: 'var(--surface2)',
-              flexShrink: 0,
-              position: 'relative', overflow: 'hidden',
+              flexShrink: 0, position: 'relative',
             }}>
-              {/* Gold shimmer top */}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }} />
+              {/* Gold top line */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, var(--gold2), var(--gold) 40%, transparent)' }} />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 6 }}>
                     {activeProject.projectId} · Project Details
                   </p>
-                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text)', letterSpacing: '-0.3px', marginBottom: 6 }}>
+                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--text)', letterSpacing: '-0.3px', lineHeight: 1.1, marginBottom: 10 }}>
                     {activeProject.name}
                   </h2>
-                  {/* Status badge inline */}
-                  <span style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px',
-                    padding: '4px 10px', borderRadius: 4,
-                    background: STATUS_META[activeProject.status].bg,
-                    color: STATUS_META[activeProject.status].color,
-                    border: `1px solid ${STATUS_META[activeProject.status].border}`,
-                  }}>
-                    {STATUS_META[activeProject.status].label}
-                  </span>
+                  {/* Status + contractor + inspectors inline */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', padding: '4px 10px', borderRadius: 4, background: STATUS_META[activeProject.status].bg, color: STATUS_META[activeProject.status].color, border: `1px solid ${STATUS_META[activeProject.status].border}` }}>
+                      {STATUS_META[activeProject.status].label}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--surface3)', border: '1px solid var(--border)', borderRadius: 5, padding: '4px 10px' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-dim)' }}>Contractor</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--blue)' }}>
+                        {activeProject.contractor.slice(0, 8)}…{activeProject.contractor.slice(-6)}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--surface3)', border: '1px solid var(--border)', borderRadius: 5, padding: '4px 10px' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-dim)' }}>Inspectors</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--green)' }}>
+                        {activeProject.inspectors.length} assigned
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <button onClick={closePanel} style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface3)', border: '1px solid var(--border)', color: 'var(--text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0 }}>
-                  <X size={15} />
+                <button onClick={closePanel} style={{ width: 32, height: 32, borderRadius: 7, background: 'var(--surface3)', border: '1px solid var(--border)', color: 'var(--text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 16 }}>
+                  <X size={14} />
                 </button>
               </div>
             </div>
 
-            {/* Panel body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* ── Panel body — no scroll, everything fits ── */}
+            <div style={{ flex: 1, padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, overflow: 'hidden' }}>
 
-              {/* ── FUND OVERVIEW — full width prominent card ── */}
-              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: 22 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 18 }}>Fund Overview</p>
+              {/* Fund Overview */}
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 14 }}>Fund Overview</p>
 
-                {/* Three big numbers */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
+                {/* Three number tiles */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14 }}>
                   {[
-                    { label: 'In Vault',  val: `${activeProject.locked} ETH`,  color: 'var(--gold)'  },
-                    { label: 'Released',  val: `${activeProject.used} ETH`,    color: 'var(--green)' },
-                    { label: 'Budget',    val: `${activeProject.budget} ETH`,  color: 'var(--text)'  },
-                  ].map(({ label, val, color }) => (
-                    <div key={label} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
-                      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color, letterSpacing: '-0.3px', lineHeight: 1, marginBottom: 6 }}>{val}</p>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</p>
+                    { label: 'In Vault',  val: `${activeProject.locked}`,  unit: 'ETH', color: 'var(--gold)'  },
+                    { label: 'Released',  val: `${activeProject.used}`,    unit: 'ETH', color: 'var(--green)' },
+                    { label: 'Budget',    val: `${activeProject.budget}`,  unit: 'ETH', color: 'var(--text)'  },
+                  ].map(({ label, val, unit, color }) => (
+                    <div key={label} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '13px 16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4, marginBottom: 5 }}>
+                        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color, letterSpacing: '-0.3px', lineHeight: 1 }}>{val}</p>
+                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-sub)' }}>{unit}</p>
+                      </div>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-sub)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>{label}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Progress bars */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px' }}>LOCKED / BUDGET</p>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--gold)', fontWeight: 500 }}>
-                        {activeProject.budget > 0 ? Math.round((activeProject.locked / activeProject.budget) * 100) : 0}%
-                      </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { label: 'LOCKED / BUDGET',   pct: activeProject.budget > 0 ? Math.round((activeProject.locked / activeProject.budget) * 100) : 0,  color: 'var(--gold)'  },
+                    { label: 'RELEASED / LOCKED',  pct: activeProject.locked > 0 ? Math.round((activeProject.used / activeProject.locked) * 100) : 0,    color: 'var(--green)' },
+                  ].map(({ label, pct, color }) => (
+                    <div key={label}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-sub)', letterSpacing: '0.3px' }}>{label}</p>
+                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color, fontWeight: 500 }}>{pct}%</p>
+                      </div>
+                      <div style={{ width: '100%', height: 5, background: 'var(--border)', borderRadius: 3 }}>
+                        <div style={{ height: '100%', borderRadius: 3, background: color, width: `${Math.min(100, pct)}%`, opacity: 0.8, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
+                      </div>
                     </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                      <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, var(--gold), var(--gold2))', width: `${activeProject.budget > 0 ? Math.min(100, Math.round((activeProject.locked / activeProject.budget) * 100)) : 0}%`, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px' }}>RELEASED / LOCKED</p>
-                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--green)', fontWeight: 500 }}>
-                        {activeProject.locked > 0 ? Math.round((activeProject.used / activeProject.locked) * 100) : 0}%
-                      </p>
-                    </div>
-                    <div style={{ width: '100%', height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                      <div style={{ height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, var(--green), #6ee7b7)', width: `${activeProject.locked > 0 ? Math.min(100, Math.round((activeProject.used / activeProject.locked) * 100)) : 0}%`, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Status banners */}
+                {/* Status message */}
                 {activeProject.locked > activeProject.used && (
-                  <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(77,187,138,0.08)', border: '1px solid rgba(77,187,138,0.2)', borderRadius: 8 }}>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--green)', letterSpacing: '0.3px' }}>
+                  <div style={{ marginTop: 12, padding: '7px 12px', background: 'rgba(77,187,138,0.08)', border: '1px solid rgba(77,187,138,0.2)', borderRadius: 7 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--green)', letterSpacing: '0.2px' }}>
                       ✓ {(activeProject.locked - activeProject.used).toFixed(4)} ETH available for release
                     </p>
                   </div>
                 )}
                 {activeProject.locked === 0 && activeProject.milestoneCount > 0 && (
-                  <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)', borderRadius: 8 }}>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--red)', letterSpacing: '0.3px' }}>
+                  <div style={{ marginTop: 12, padding: '7px 12px', background: 'rgba(224,82,82,0.08)', border: '1px solid rgba(224,82,82,0.2)', borderRadius: 7 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--red)', letterSpacing: '0.2px' }}>
                       ⚑ No funds locked — lock ETH before releasing milestones
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* ── META CHIPS — 4 across ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-                {[
-                  { label: 'Status',      val: activeProject.statusLabel },
-                  { label: 'Milestones',  val: `${activeProject.paidMilestones} / ${activeProject.milestoneCount}` },
-                  { label: 'Paid',        val: `${activeProject.paidMilestones}` },
-                  { label: 'Approvals',   val: `${activeProject.requiredApprovals} of ${activeProject.inspectors.length}` },
-                ].map(({ label, val }) => (
-                  <div key={label} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 13px' }}>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 5 }}>{label}</p>
-                    <p style={{ fontSize: 13, color: 'var(--text-sub)', fontWeight: 500 }}>{val}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── CONTRACTOR + INSPECTORS side by side ── */}
+              {/* Meta chips + People — side by side */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 8 }}>Contractor</p>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--blue)', letterSpacing: '0.3px', wordBreak: 'break-all', lineHeight: 1.5 }}>
-                    {activeProject.contractor.slice(0, 10)}…{activeProject.contractor.slice(-8)}
-                  </p>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 4 }}>
-                    {activeProject.contractor.slice(0, 42)}
-                  </p>
+
+                {/* 2x2 meta chips */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { label: 'Status',     val: activeProject.statusLabel,                                            color: STATUS_META[activeProject.status].color },
+                    { label: 'Milestones', val: `${activeProject.paidMilestones} / ${activeProject.milestoneCount}`, color: 'var(--text)' },
+                    { label: 'Approvals',  val: `${activeProject.requiredApprovals} of ${activeProject.inspectors.length}`, color: 'var(--text)' },
+                    { label: 'Active',     val: activeProject.active ? 'Yes' : 'No',                                  color: activeProject.active ? 'var(--green)' : 'var(--red)' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '11px 13px' }}>
+                      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 5 }}>{label}</p>
+                      <p style={{ fontSize: 13, color, fontWeight: 500 }}>{val}</p>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 8 }}>
-                    Inspectors ({activeProject.inspectors.length})
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {activeProject.inspectors.map((addr, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--gold)', background: 'var(--gold-soft)', border: '1px solid rgba(201,162,77,0.2)', borderRadius: 3, padding: '1px 5px', flexShrink: 0 }}>
-                          {i + 1}
-                        </span>
-                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--green)', letterSpacing: '0.3px', wordBreak: 'break-all' }}>
-                          {addr.slice(0, 8)}…{addr.slice(-6)}
-                        </p>
-                      </div>
-                    ))}
+
+                {/* Contractor + Inspectors stacked */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '11px 14px' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 6 }}>Contractor</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--blue)', letterSpacing: '0.3px' }}>
+                      {activeProject.contractor.slice(0, 10)}…{activeProject.contractor.slice(-8)}
+                    </p>
+                  </div>
+                  <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '11px 14px', flex: 1 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 8 }}>
+                      Inspectors ({activeProject.inspectors.length})
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {activeProject.inspectors.map((addr, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--gold)', background: 'var(--gold-soft)', border: '1px solid rgba(201,162,77,0.2)', borderRadius: 3, padding: '1px 5px', flexShrink: 0 }}>{i + 1}</span>
+                          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--green)', letterSpacing: '0.3px' }}>
+                            {addr.slice(0, 10)}…{addr.slice(-8)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── ACTIONS — two column grid ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-
-                {/* Lock Funds */}
-                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 18px' }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>Lock Funds</p>
+              {/* Actions — Lock + Release side by side */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '14px 16px' }}>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 10 }}>Lock Funds</p>
                   <PanelInput placeholder="Amount in ETH  e.g. 5" value={amount} onChange={(e: InputEvent) => setAmount(e.target.value)} />
-                  <PanelButton icon={<Lock size={13} />} onClick={lockFunds}>Lock to Vault</PanelButton>
+                  <PanelButton icon={<Lock size={12} />} onClick={lockFunds}>Lock to Vault</PanelButton>
                 </div>
-
-                {/* Release Payment */}
-                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 18px' }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
+                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '14px 16px' }}>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 10 }}>
                     Release Payment · {activeProject.paidMilestones} paid
                   </p>
                   <PanelInput placeholder={`Milestone ID  (1 – ${activeProject.milestoneCount || '?'})`} value={releaseId} onChange={(e: InputEvent) => setReleaseId(e.target.value)} />
-                  <PanelButton icon={<Send size={13} />} onClick={releasePayment} primary>Release Payment</PanelButton>
+                  <PanelButton icon={<Send size={12} />} onClick={releasePayment} primary>Release Payment</PanelButton>
                 </div>
               </div>
 
-              {/* New Milestone — full width */}
-              <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 18px' }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>
+              {/* New Milestone — full width, single row */}
+              <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 9, padding: '14px 16px' }}>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 10 }}>
                   New Milestone · {activeProject.milestoneCount} existing
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'end' }}>
-                  <div>
-                    <PanelInput placeholder="Milestone description..." value={milestone.description} onChange={(e: InputEvent) => setMilestone({ ...milestone, description: e.target.value })} />
-                    <PanelInput placeholder="ETH amount e.g. 5" value={milestone.amount} onChange={(e: InputEvent) => setMilestone({ ...milestone, amount: e.target.value })} />
-                  </div>
-                  <div style={{ paddingBottom: 9 }}>
-                    <button
-                      onClick={createMilestone}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--surface3)', border: '1px solid var(--border)', color: 'var(--text-sub)', borderRadius: 8, padding: '10px 16px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(201,162,77,0.3)'; e.currentTarget.style.color = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-soft)' }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; e.currentTarget.style.background = 'var(--surface3)' }}
-                    >
-                      <Flag size={13} /> Add Milestone
-                    </button>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 160px auto', gap: 8, alignItems: 'center' }}>
+                  <input
+                    value={milestone.description}
+                    onChange={(e: InputEvent) => setMilestone({ ...milestone, description: e.target.value })}
+                    placeholder="Milestone description..."
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 11, outline: 'none', letterSpacing: '0.2px' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(201,162,77,0.35)' }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
+                  />
+                  <input
+                    value={milestone.amount}
+                    onChange={(e: InputEvent) => setMilestone({ ...milestone, amount: e.target.value })}
+                    placeholder="ETH amount"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 11, outline: 'none', letterSpacing: '0.2px' }}
+                    onFocus={e => { e.target.style.borderColor = 'rgba(201,162,77,0.35)' }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
+                  />
+                  <button
+                    onClick={createMilestone}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--surface3)', border: '1px solid var(--border)', color: 'var(--text-sub)', borderRadius: 7, padding: '9px 16px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(201,162,77,0.3)'; e.currentTarget.style.color = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-soft)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-sub)'; e.currentTarget.style.background = 'var(--surface3)' }}
+                  >
+                    <Flag size={12} /> Add Milestone
+                  </button>
                 </div>
               </div>
 
@@ -511,72 +549,97 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
 
 /* ─── SUB-COMPONENTS ─── */
 
-function StatCard({ label, value, hint, hintType, fill }: { label: string; value: string; hint: string; hintType: 'up' | 'warn'; fill: number }) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 22px', position: 'relative', overflow: 'hidden', transition: 'transform 0.3s', cursor: 'default' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
-    >
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.9px', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: 12 }}>{label}</p>
-      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 28, color: 'var(--text)', letterSpacing: '-0.4px', lineHeight: 1 }}>{value}</p>
-      <p style={{ fontSize: 10, marginTop: 7, color: hintType === 'up' ? 'var(--green)' : 'var(--amber)', fontFamily: 'var(--font-mono)', letterSpacing: '0.2px' }}>{hint}</p>
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'var(--border)' }}>
-        <div style={{ height: '100%', width: `${Math.min(100, Math.max(0, fill))}%`, background: 'linear-gradient(90deg, var(--gold), var(--gold2))', borderRadius: 1, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
-      </div>
-    </div>
-  )
-}
-
 function SkeletonCard() {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 22, animation: 'skeletonPulse 1.6s ease-in-out infinite' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div><div style={{ width: 160, height: 14, background: 'var(--border2)', borderRadius: 4, marginBottom: 8 }} /><div style={{ width: 80, height: 9, background: 'var(--border)', borderRadius: 3 }} /></div>
-        <div style={{ width: 72, height: 22, background: 'var(--border)', borderRadius: 4 }} />
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 22, animation: 'skeletonPulse 1.6s ease-in-out infinite' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div><div style={{ width: 160, height: 14, background: 'var(--border2)', borderRadius: 4, marginBottom: 8 }} /><div style={{ width: 100, height: 9, background: 'var(--border)', borderRadius: 3 }} /></div>
+        <div style={{ width: 80, height: 22, background: 'var(--border)', borderRadius: 4 }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 9 }}>
-        <div style={{ width: 50, height: 9, background: 'var(--border)', borderRadius: 3 }} />
-        <div style={{ width: 80, height: 9, background: 'var(--border)', borderRadius: 3 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 14 }}>
+        {[0,1,2].map(i => <div key={i} style={{ height: 52, background: 'var(--border)', borderRadius: 8 }} />)}
       </div>
-      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2 }} />
+      <div style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 2 }} />
     </div>
   )
 }
 
 function ProjectCard({ project, isActive, onClick }: { project: Project; isActive: boolean; onClick: () => void }) {
-  const pct  = project.budget > 0 ? Math.round((project.used / project.budget) * 100) : 0
-  const meta = STATUS_META[project.status]
+  const meta       = STATUS_META[project.status]
+  const lockPct    = project.budget > 0 ? Math.round((project.locked / project.budget) * 100) : 0
+  const releasePct = project.locked > 0 ? Math.round((project.used / project.locked) * 100) : 0
+  const showRelease = project.locked > 0
+
   return (
-    <div onClick={onClick} style={{ background: isActive ? 'var(--surface2)' : 'var(--surface)', border: `1px solid ${isActive ? 'rgba(201,162,77,0.5)' : 'var(--border)'}`, borderRadius: 16, padding: 22, cursor: 'pointer', position: 'relative', overflow: 'hidden', boxShadow: isActive ? '0 0 0 1px rgba(201,162,77,0.12)' : 'none', transition: 'all 0.3s cubic-bezier(0.22,1,0.36,1)' }}
+    <div onClick={onClick} style={{
+      background: isActive ? 'var(--surface2)' : 'var(--surface)',
+      border: `1px solid ${isActive ? 'rgba(201,162,77,0.5)' : 'var(--border)'}`,
+      borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+      position: 'relative',
+      boxShadow: isActive ? '0 0 0 1px rgba(201,162,77,0.12)' : 'none',
+      transition: 'all 0.25s cubic-bezier(0.22,1,0.36,1)',
+    }}
       onMouseEnter={e => { if (!isActive) { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(201,162,77,0.35)'; el.style.transform = 'translateY(-3px)'; el.style.boxShadow = '0 16px 36px rgba(0,0,0,0.4)' } }}
       onMouseLeave={e => { if (!isActive) { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--border)'; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none' } }}
     >
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: isActive ? 'linear-gradient(90deg, transparent, var(--gold), transparent)' : 'linear-gradient(90deg, transparent, var(--border2), transparent)' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-        <div>
-          <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.1px' }}>{project.name}</p>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 3, letterSpacing: '0.3px' }}>{project.projectId}</p>
-        </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', padding: '4px 8px', borderRadius: 4, whiteSpace: 'nowrap', background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}>{meta.label}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>Budget</p>
-        <p style={{ fontSize: 12, color: 'var(--text-sub)' }}><strong style={{ color: 'var(--text)', fontWeight: 500 }}>{project.used}</strong> / {project.budget} ETH</p>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>Vault</p>
-        <p style={{ fontSize: 12, color: project.locked > 0 ? 'var(--gold)' : 'var(--text-dim)' }}>
-          {project.locked > 0 ? `${project.locked} ETH locked` : 'No funds locked'}
-        </p>
-      </div>
-      <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 2 }}>
-        <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg, var(--gold), var(--gold2))', width: `${pct}%`, position: 'relative', transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }}>
-          {pct > 0 && pct < 100 && <span style={{ position: 'absolute', right: -1, top: -2, width: 7, height: 7, borderRadius: '50%', background: 'var(--gold2)', boxShadow: '0 0 5px rgba(228,191,116,0.5)', display: 'block' }} />}
+
+      {/* Head */}
+      <div style={{ padding: '16px 20px 13px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.1px' }}>{project.name}</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-sub)', marginTop: 3, letterSpacing: '0.3px' }}>
+              {project.projectId} · {project.contractor.slice(0, 8)}…{project.contractor.slice(-6)}
+            </p>
+          </div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.5px', padding: '4px 8px', borderRadius: 4, whiteSpace: 'nowrap', background: meta.bg, color: meta.color, border: `1px solid ${meta.border}` }}>
+            {meta.label}
+          </span>
         </div>
       </div>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-dim)', marginTop: 9, letterSpacing: '0.3px' }}>
-        {project.milestoneCount === 0 ? 'No milestones yet' : `${project.paidMilestones} of ${project.milestoneCount} milestone${project.milestoneCount !== 1 ? 's' : ''} paid`}
-      </p>
+
+      {/* Body */}
+      <div style={{ padding: '13px 20px' }}>
+        {/* Three metric tiles */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 12, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+          {[
+            { label: 'Budget',   val: `${project.budget} ETH`,  color: 'var(--text)'  },
+            { label: 'In Vault', val: project.locked > 0 ? `${project.locked} ETH` : '—', color: project.locked > 0 ? 'var(--gold)' : 'var(--text-sub)' },
+            { label: 'Released', val: project.used > 0 ? `${project.used} ETH` : '—',    color: project.used > 0 ? 'var(--green)' : 'var(--text-sub)'  },
+          ].map(({ label, val, color }, i) => (
+            <div key={label} style={{ padding: '11px 13px', borderRight: i < 2 ? '1px solid var(--border)' : 'none' }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--text-sub)', marginBottom: 5 }}>{label}</p>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 500, color, lineHeight: 1 }}>{val}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-sub)', letterSpacing: '0.2px', textTransform: 'uppercase' }}>
+              {showRelease ? 'Released / Locked' : 'Locked / Budget'}
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: showRelease ? 'var(--green)' : 'var(--gold)', fontWeight: 500 }}>
+              {showRelease ? `${releasePct}%` : `${lockPct}%`}
+            </p>
+          </div>
+          <div style={{ width: '100%', height: 4, background: 'var(--border)', borderRadius: 2 }}>
+            <div style={{ height: '100%', borderRadius: 2, background: showRelease ? 'var(--green)' : 'var(--gold)', width: `${Math.min(100, showRelease ? releasePct : lockPct)}%`, opacity: 0.8, transition: 'width 0.6s cubic-bezier(0.22,1,0.36,1)' }} />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-sub)', letterSpacing: '0.2px' }}>
+            {project.milestoneCount === 0 ? 'No milestones yet' : `${project.paidMilestones} of ${project.milestoneCount} milestone${project.milestoneCount !== 1 ? 's' : ''} paid`}
+          </p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-sub)', letterSpacing: '0.2px' }}>
+            {project.inspectors.length} inspector{project.inspectors.length !== 1 ? 's' : ''} · {project.requiredApprovals} of {project.inspectors.length} req.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -603,7 +666,7 @@ function Input({ placeholder, value, onChange, type }: { placeholder?: string; v
 function PanelInput({ placeholder, value, onChange }: { placeholder?: string; value: string; onChange: (e: InputEvent) => void }) {
   return (
     <input value={value} onChange={onChange} placeholder={placeholder}
-      style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 13px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', letterSpacing: '0.3px', marginBottom: 9 }}
+      style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 7, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 11, outline: 'none', letterSpacing: '0.2px', marginBottom: 8 }}
       onFocus={e => { e.target.style.borderColor = 'rgba(201,162,77,0.35)' }}
       onBlur={e => { e.target.style.borderColor = 'var(--border)' }}
     />
@@ -613,7 +676,7 @@ function PanelInput({ placeholder, value, onChange }: { placeholder?: string; va
 function PanelButton({ children, icon, onClick, primary }: { children: React.ReactNode; icon?: React.ReactNode; onClick: () => void; primary?: boolean }) {
   return (
     <button onClick={onClick}
-      style={{ width: '100%', background: primary ? 'var(--gold)' : 'var(--surface3)', border: `1px solid ${primary ? 'var(--gold)' : 'var(--border)'}`, color: primary ? '#0d0f14' : 'var(--text-sub)', borderRadius: 8, padding: '10px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}
+      style={{ width: '100%', background: primary ? 'var(--gold)' : 'var(--surface3)', border: `1px solid ${primary ? 'var(--gold)' : 'var(--border)'}`, color: primary ? '#0d0f14' : 'var(--text-sub)', borderRadius: 7, padding: '9px', fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}
       onMouseEnter={e => { const el = e.currentTarget; primary ? (el.style.background = 'var(--gold2)', el.style.boxShadow = '0 5px 18px rgba(201,162,77,0.25)') : (el.style.borderColor = 'rgba(201,162,77,0.3)', el.style.color = 'var(--gold)', el.style.background = 'var(--gold-soft)') }}
       onMouseLeave={e => { const el = e.currentTarget; primary ? (el.style.background = 'var(--gold)', el.style.boxShadow = 'none') : (el.style.borderColor = 'var(--border)', el.style.color = 'var(--text-sub)', el.style.background = 'var(--surface3)') }}
     >

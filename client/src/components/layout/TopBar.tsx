@@ -1,4 +1,4 @@
-import { Wallet, Wifi } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 interface TopBarProps {
   account:     string | null
@@ -15,196 +15,135 @@ export function TopBar({ account, networkName, onConnect, onLogout }: TopBarProp
       position: 'sticky',
       top: 0,
       zIndex: 30,
-      height: 58,
+      height: 62,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'rgba(13,15,20,0.92)',
-      backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid var(--border)',
-      padding: '0 28px',
-      // Gold shimmer line below the border
-      boxShadow: '0 1px 0 0 rgba(201,162,77,0.12)',
+      background: 'var(--bg)',
+      padding: '0 36px',
+      flexShrink: 0,
+      boxShadow: '0 1px 0 var(--border)',
     }}>
 
       {/* ── Brand ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
 
-        {/* Logo mark */}
-        <div style={{
-          width: 32,
-          height: 32,
-          borderRadius: 9,
-          background: 'linear-gradient(135deg, #1d2233, #272e42)',
-          border: '1px solid var(--border2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          flexShrink: 0,
-        }}>
-          {/* Subtle gold glow top-left */}
+        {/* Wordmark */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 20, color: 'var(--gold)',
+              fontStyle: 'italic', lineHeight: 1, marginRight: 1,
+            }}>B</span>
+            <span style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 20, color: 'var(--text)',
+              letterSpacing: '-0.4px', lineHeight: 1,
+            }}>lockProcure</span>
+          </div>
           <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(135deg, rgba(201,162,77,0.12), transparent 60%)',
-            pointerEvents: 'none',
+            height: 2, width: 56,
+            background: 'linear-gradient(90deg, var(--gold2) 0%, var(--gold) 50%, transparent 100%)',
+            borderRadius: 1, marginTop: 4,
           }} />
-          <span style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 14,
-            color: 'var(--gold)',
-            fontStyle: 'italic',
-            position: 'relative',
-            zIndex: 1,
-          }}>
-            B
-          </span>
         </div>
 
-        {/* Name */}
-        <span style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: 17,
-          color: 'var(--text)',
-          letterSpacing: '-0.3px',
-        }}>
-          BlockProcure
-        </span>
-
         {/* Divider */}
-        <div style={{
-          width: 1, height: 16,
-          background: 'var(--border2)',
-          margin: '0 4px',
-        }} />
+        <div style={{ width: 1, height: 28, background: 'var(--border2)', flexShrink: 0 }} />
 
-        {/* Tagline */}
-        <span style={{
-          fontSize: 11,
-          color: 'var(--text-dim)',
-          letterSpacing: '0.2px',
-          fontWeight: 300,
-        }}>
-          Transparent Infrastructure Payments
-        </span>
+        {/* Ministry */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9, color: 'var(--text-dim)',
+            letterSpacing: '0.6px', textTransform: 'uppercase', lineHeight: 1,
+          }}>Platform</span>
+          <span style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 12, color: 'var(--text-sub)',
+            letterSpacing: '-0.1px', fontWeight: 400, lineHeight: 1,
+          }}>Ministry of Infrastructure · Maharashtra</span>
+        </div>
       </div>
 
-      {/* ── Right controls ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-
-        {/* Network pill */}
-        {networkName && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 7,
-            background: 'var(--surface2)',
-            border: '1px solid var(--border)',
-            borderRadius: 99,
-            padding: '5px 13px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--text-sub)',
-            letterSpacing: '0.3px',
-          }}>
-            <span style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: 'var(--green)',
-              boxShadow: '0 0 6px rgba(77,187,138,0.5)',
-              animation: 'netPulse 2.5s ease-in-out infinite',
-            }} />
-            {networkName}
-          </div>
-        )}
+      {/* ── Right ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
         {account ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-
-            {/* Wallet address pill */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--surface2)',
-              border: '1px solid var(--border)',
-              borderRadius: 99,
-              padding: '5px 13px',
-            }}>
+          <>
+            {/* Stacked address block — Option 2 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{
+                  width: 5, height: 5, borderRadius: '50%',
+                  background: 'var(--green)', flexShrink: 0,
+                  boxShadow: '0 0 5px rgba(77,187,138,0.5)',
+                }} />
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 11,
+                  color: 'var(--text)', fontWeight: 500, letterSpacing: '0.3px',
+                }}>{short}</span>
+              </div>
               <span style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'var(--green)',
-                boxShadow: '0 0 6px rgba(77,187,138,0.4)',
-                flexShrink: 0,
-              }} />
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--text)',
-                fontWeight: 500,
-                letterSpacing: '0.3px',
+                fontFamily: 'var(--font-mono)', fontSize: 9,
+                color: 'var(--text-dim)', letterSpacing: '0.3px',
               }}>
-                {short}
+                {networkName ?? 'Unknown Network'} · Chain 1337
               </span>
             </div>
 
-            {/* Disconnect */}
+            {/* Vertical rule */}
+            <div style={{ width: 1, height: 28, background: 'var(--border2)', flexShrink: 0 }} />
+
+            {/* Logout button — proper, professional */}
             <button
               onClick={onLogout}
+              title="Log out"
               style={{
-                background: 'transparent',
-                border: 'none',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 11,
-                fontWeight: 500,
-                color: 'var(--text-dim)',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: 6,
-                letterSpacing: '0.2px',
-                transition: 'color 0.2s',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                borderRadius: 6, padding: '6px 12px',
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--text-sub)', cursor: 'pointer',
+                letterSpacing: '0.2px', transition: 'all 0.15s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(224,82,82,0.08)'
+                e.currentTarget.style.borderColor = 'rgba(224,82,82,0.3)'
+                e.currentTarget.style.color = 'var(--red)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--surface2)'
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.color = 'var(--text-sub)'
+              }}
             >
-              Disconnect
+              <LogOut size={11} />
+              Log Out
             </button>
-          </div>
+          </>
         ) : (
           <button
             onClick={onConnect}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              background: 'var(--gold)',
-              color: '#0d0f14',
-              border: 'none',
-              borderRadius: 99,
-              padding: '7px 18px',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              letterSpacing: '0.2px',
-              transition: 'background 0.2s, transform 0.2s, box-shadow 0.2s',
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'var(--gold)', color: '#0d0f14',
+              border: 'none', borderRadius: 7,
+              padding: '9px 22px',
+              fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', letterSpacing: '0.1px',
+              transition: 'background 0.15s',
             }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--gold2)'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(201,162,77,0.3)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--gold)'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--gold2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--gold)')}
           >
-            <Wallet size={13} />
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <rect x="1.5" y="4" width="10" height="7.5" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M4.5 4V3a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <circle cx="6.5" cy="7.5" r="1" fill="currentColor"/>
+            </svg>
             Connect Wallet
           </button>
         )}
