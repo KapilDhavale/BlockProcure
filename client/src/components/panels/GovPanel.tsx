@@ -388,7 +388,7 @@ export function GovPanel({ contracts }: { contracts: Contracts | null }) {
             </div>
 
             {/* ── Panel body — no scroll, everything fits ── */}
-            <div style={{ flex: 1, padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, overflow: 'hidden' }}>
+            <div style={{ flex: 1, padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, overflowY: 'auto' }}>
 
               {/* Fund Overview */}
               <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
